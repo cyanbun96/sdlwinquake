@@ -885,14 +885,18 @@ void CL_ParseServerMessage (void)
 				{
 					CDAudio_Pause ();
 #ifdef _WIN32
+#ifndef SDL
 					VID_HandlePause (true);
+#endif
 #endif
 				}
 				else
 				{
 					CDAudio_Resume ();
 #ifdef _WIN32
+#ifndef SDL
 					VID_HandlePause (false);
+#endif
 #endif
 				}
 			}
