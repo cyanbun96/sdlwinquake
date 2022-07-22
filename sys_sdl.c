@@ -1,5 +1,6 @@
 /* -*- Mode: C; tab-width: 4 -*- */ 
 
+#include "SDL.h"
 #include <unistd.h>
 #include <signal.h>
 #include <stdlib.h>

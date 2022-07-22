@@ -81,7 +81,7 @@ cvar_t	pausable = {"pausable","1"};
 
 cvar_t	temp1 = {"temp1","0"};
 
-
+extern void IN_MLookDown (void);
 /*
 ================
 Host_EndGame

@@ -14,3 +14,5 @@ sdlquake
 autom4*
 TAGS
 configure
+config.h.in
+aclocal.m4

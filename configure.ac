@@ -45,6 +45,7 @@ AS_CASE(
 	[alpha*-*-linux*],[CFLAGS="$CFLAGS -mcpu=ev4 -Wa,-mall"],
 	[x86_64-*-linux*],[CHECK_M32="yes" CFLAGS="$CFLAGS -ffast-math -funroll-loops -fomit-frame-pointer -fexpensive-optimizations"],
 	[x86_64-*-mingw32*],[CHECK_M32="no" CFLAGS="$CFLAGS -ffast-math -funroll-loops -fomit-frame-pointer -fexpensive-optimizations"],
+	[*-apple-*],[CHECK_M32="no" CFLAGS="$CFLAGS -ffast-math -funroll-loops -fomit-frame-pointer -fexpensive-optimizations"],
 	[*-linux*],[CFLAGS="$CFLAGS -ffast-math -funroll-loops -fomit-frame-pointer -fexpensive-optimizations"],
 	AC_MSG_ERROR(["Unrecognized platform $host."]))
 
