@@ -866,7 +866,7 @@ void COM_FileBase (char *in, char *out)
 	while (s != in && *s != '.')
 		s--;
 	
-	for (s2 = s ; s2 > in && *s2 != '/' ; s2--)
+	for (s2 = s ; *s2 && *s2 != '/' ; s2--)
 	;
 	
 	if (s-s2 < 2)
@@ -1043,7 +1043,7 @@ void COM_CheckRegistered (void)
 		if (pop[i] != (unsigned short)BigShort (check[i]))
 			Sys_Error ("Corrupted data file.");
 	
-	Cvar_Set ("cmdline", com_cmdline);
+	Cvar_Set ("cmdline", com_cmdline+1); //johnfitz -- eliminate leading space
 	Cvar_Set ("registered", "1");
 	static_registered = 1;
 	Con_Printf ("Playing registered version.\n");
@@ -1085,8 +1085,7 @@ void COM_InitArgv (int argc, char **argv)
 
 	safe = false;
 
-	for (com_argc=0 ; (com_argc<MAX_NUM_ARGVS) && (com_argc < argc) ;
-		 com_argc++)
+	for (com_argc=0 ; (com_argc<MAX_NUM_ARGVS) && (com_argc < argc) ; com_argc++)
 	{
 		largv[com_argc] = argv[com_argc];
 		if (!Q_strcmp ("-safe", argv[com_argc]))
@@ -1119,7 +1118,6 @@ void COM_InitArgv (int argc, char **argv)
 		standard_quake = false;
 	}
 }
-
 
 /*
 ================
@@ -1447,7 +1445,7 @@ int COM_FindFile (char *filename, int *handle, FILE **file)
 				else
 					sprintf (cachepath,"%s%s", com_cachedir, netpath+2);
 #else
-				sprintf (cachepath,"%s/%s", com_cachedir, netpath);
+				sprintf (cachepath,"%s%s", com_cachedir, netpath);
 #endif
 
 				cachetime = Sys_FileTime (cachepath);
@@ -1642,8 +1640,7 @@ pack_t *COM_LoadPackFile (char *packfile)
 		return NULL;
 	}
 	Sys_FileRead (packhandle, (void *)&header, sizeof(header));
-	if (header.id[0] != 'P' || header.id[1] != 'A'
-	|| header.id[2] != 'C' || header.id[3] != 'K')
+	if (header.id[0] != 'P' || header.id[1] != 'A' || header.id[2] != 'C' || header.id[3] != 'K')
 		Sys_Error ("%s is not a packfile", packfile);
 	header.dirofs = LittleLong (header.dirofs);
 	header.dirlen = LittleLong (header.dirlen);
@@ -1656,7 +1653,10 @@ pack_t *COM_LoadPackFile (char *packfile)
 	if (numpackfiles != PAK0_COUNT)
 		com_modified = true;    // not the original file
 
-	newfiles = Hunk_AllocName (numpackfiles * sizeof(packfile_t), "packfile");
+	//johnfitz -- dynamic gamedir loading
+	//Hunk_AllocName (numpackfiles * sizeof(packfile_t), "packfile");
+	newfiles = Z_Malloc(numpackfiles * sizeof(packfile_t));
+	//johnfitz
 
 	Sys_FileSeek (packhandle, header.dirofs);
 	Sys_FileRead (packhandle, (void *)info, header.dirlen);
@@ -1676,13 +1676,16 @@ pack_t *COM_LoadPackFile (char *packfile)
 		newfiles[i].filelen = LittleLong(info[i].filelen);
 	}
 
-	pack = Hunk_Alloc (sizeof (pack_t));
+	//johnfitz -- dynamic gamedir loading
+	//pack = Hunk_Alloc (sizeof (pack_t));
+	pack = Z_Malloc (sizeof (pack_t));
+	//johnfitz
 	strcpy (pack->filename, packfile);
 	pack->handle = packhandle;
 	pack->numfiles = numpackfiles;
 	pack->files = newfiles;
 	
-	Con_Printf ("Added packfile %s (%i files)\n", packfile, numpackfiles);
+	//Con_Printf ("Added packfile %s (%i files)\n", packfile, numpackfiles);
 	return pack;
 }
 
@@ -1706,8 +1709,7 @@ void COM_AddGameDirectory (char *dir)
 
 //
 // add the directory to the search path
-//
-	search = Hunk_Alloc (sizeof(searchpath_t));
+	search = Z_Malloc(sizeof(searchpath_t));
 	strcpy (search->filename, dir);
 	search->next = com_searchpaths;
 	com_searchpaths = search;
@@ -1721,10 +1723,10 @@ void COM_AddGameDirectory (char *dir)
 		pak = COM_LoadPackFile (pakfile);
 		if (!pak)
 			break;
-		search = Hunk_Alloc (sizeof(searchpath_t));
+		search = Z_Malloc(sizeof(searchpath_t));
 		search->pack = pak;
 		search->next = com_searchpaths;
-		com_searchpaths = search;               
+		com_searchpaths = search;         
 	}
 
 //
@@ -1784,6 +1786,7 @@ void COM_InitFilesystem (void)
 // start up with GAMENAME by default (id1)
 //
 	COM_AddGameDirectory (va("%s/"GAMENAME, basedir) );
+	strcpy (com_gamedir, va("%s/"GAMENAME, basedir));
 
 	if (COM_CheckParm ("-rogue"))
 		COM_AddGameDirectory (va("%s/rogue", basedir) );
