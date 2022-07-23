@@ -1,14 +1,12 @@
 
-bin_PROGRAMS = sdlquake
+bin_PROGRAMS = goodlookingquake
 
-sdlquake_LDADD = @MATHLIB@ @INETLIB@
+goodlookingquake_LDADD = @MATHLIB@ @INETLIB@
 
-sdlquake_SOURCES =		\
+goodlookingquake_SOURCES =		\
 	adivtab.h		\
 	anorm_dots.h		\
 	anorms.h		\
-	asm_draw.h		\
-	asm_i386.h		\
 	block16.h		\
 	block8.h		\
 	bspfile.h		\
@@ -104,7 +102,6 @@ sdlquake_SOURCES =		\
 	resource.h		\
 	sbar.c			\
 	sbar.h			\
-	scitech			\
 	screen.c		\
 	screen.h		\
 	server.h		\
@@ -133,32 +130,6 @@ sdlquake_SOURCES =		\
 	zone.c			\
 	zone.h			\
 	$(MAYBE_X86_SRCS) $(NONX86_SRCS)
-
-if MAKE_ASM
-MAYBE_X86_SRCS = $(X86_SRCS)
-else
-MAYBE_X86_SRCS =
-endif
-
-X86_SRCS =			\
-	snd_mixa.S		\
-	sys_dosa.S		\
-	d_draw.S		\
-	d_draw16.S		\
-	d_parta.S		\
-	d_polysa.S		\
-	d_scana.S		\
-	d_spr8.S		\
-	d_varsa.S		\
-	math.S			\
-	r_aclipa.S		\
-	r_aliasa.S		\
-	r_drawa.S		\
-	r_edgea.S		\
-	r_varsa.S		\
-	surf16.S		\
-	surf8.S			\
-	worlda.S
 
 NONX86_SRCS =			\
 	d_vars.c		\
@@ -222,36 +193,6 @@ LNX_SRCS =			\
 	vid_svgalib.c		\
 	vid_x.c
 
-SUN_SRCS =			\
-	snd_sun.c		\
-	in_sun.c		\
-	sys_sun.c		\
-	vid_sunx.c		\
-	vid_sunxil.c
-
-NEXT_SRCS =			\
-	snd_next.c
-
-GL_SRCS =			\
-	gl_draw.c		\
-	gl_mesh.c		\
-	gl_model.c		\
-	gl_model.h		\
-	gl_refrag.c		\
-	gl_rlight.c		\
-	gl_rmain.c		\
-	gl_rmisc.c		\
-	gl_rsurf.c		\
-	gl_screen.c		\
-	gl_test.c		\
-	gl_vidlinux.c		\
-	gl_vidlinuxglx.c	\
-	gl_vidnt.c		\
-	gl_warp.c		\
-	gl_warp_sin.h		\
-	glquake.h		\
-	glquake2.h
-
 EXTRA_DIST =			\
 	README			\
 	README.SDL		\
@@ -287,15 +228,8 @@ EXTRA_DIST =			\
 	wq.bat			\
 	wqreadme.txt		\
 	$(NULL_SRCS)		\
-	$(DOS_SRCS)		\
 	$(WIN_SRCS)		\
 	$(LNX_SRCS)		\
-	$(SUN_SRCS)		\
-	$(NEXT_SRCS)		\
-	$(GL_SRCS)		\
 	data			\
 	docs			\
-	dxsdk			\
-	gas2masm		\
-	kit			\
-	scitech
+	kit			

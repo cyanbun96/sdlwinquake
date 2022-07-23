@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.69])
-AC_INIT([SDL Quake],[1.0.9],[])
+AC_INIT([Good Looking Quake],[1.0.9],[])
 AC_CONFIG_AUX_DIR([.])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([README.SDL])
@@ -43,17 +43,11 @@ dnl The alpha architecture needs special flags for binary portability
 AS_CASE(
 	[$host],
 	[alpha*-*-linux*],[CFLAGS="$CFLAGS -mcpu=ev4 -Wa,-mall"],
-	[x86_64-*-linux*],[CHECK_M32="yes" CFLAGS="$CFLAGS -ffast-math -funroll-loops -fomit-frame-pointer -fexpensive-optimizations"],
-	[x86_64-*-mingw32*],[CHECK_M32="no" CFLAGS="$CFLAGS -ffast-math -funroll-loops -fomit-frame-pointer -fexpensive-optimizations"],
-	[*-apple-*],[CHECK_M32="no" CFLAGS="$CFLAGS -ffast-math -funroll-loops -fomit-frame-pointer"],
+	[x86_64-*-linux*],[CFLAGS="$CFLAGS -ffast-math -funroll-loops -fomit-frame-pointer -fexpensive-optimizations"],
+	[x86_64-*-mingw32*],[CFLAGS="$CFLAGS -ffast-math -funroll-loops -fomit-frame-pointer -fexpensive-optimizations"],
+	[*-apple-*],[CFLAGS="$CFLAGS -ffast-math -funroll-loops -fomit-frame-pointer"],
 	[*-linux*],[CFLAGS="$CFLAGS -ffast-math -funroll-loops -fomit-frame-pointer -fexpensive-optimizations"],
 	AC_MSG_ERROR(["Unrecognized platform $host."]))
-
-#AS_IF([test "$CHECK_M32" = "yes"],
-#	AX_CHECK_COMPILE_FLAG(
-#		[-m32], 
-#		[CFLAGS="-m32 $CFLAGS" CCASFLAGS="-m32 $CCASFLAGS"], 
-#		AC_MSG_ERROR(["$CC does not build 32-bit programs correctly. See your distribution's documentation on cross-compiling to i386."])))
 
 dnl Figure out which math and networking libraries to use
 AS_CASE(
@@ -77,16 +71,6 @@ AS_CASE(
 	[cp ico_o ico.o; ICONOBJ="ico.o"],
 	[ICONOBJ=""])
 AC_SUBST(ICONOBJ)
-
-dnl Enable/disable the i686 asm
-AC_ARG_ENABLE(
-	asm,
-	AS_HELP_STRING(
-		[--enable-asm],
-		[enable i686 assembly routines (default=no)]))
-AM_CONDITIONAL([MAKE_ASM], [test "$enable_asm" = yes])
-AM_COND_IF([MAKE_ASM], 
-	AC_DEFINE([USE_ASM],[],[Define to use i686 assembly sources]))
 
 CPPFLAGS="$CPPFLAGS"
 

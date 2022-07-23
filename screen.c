@@ -888,11 +888,7 @@ void SCR_UpdateScreen (void)
 	D_DisableBackBufferAccess ();	// for adapters that can't stay mapped in
 									//  for linear writes all the time
 
-	VID_LockBuffer ();
-
 	V_RenderView ();
-
-	VID_UnlockBuffer ();
 
 	D_EnableBackBufferAccess ();	// of all overlay stuff if drawing directly
 
