@@ -1,5 +1,7 @@
 /*
-Copyright (C) 1996-1997 Id Software, Inc.
+Copyright (C) 1996-2001 Id Software, Inc.
+Copyright (C) 2002-2005 John Fitzgibbons and others
+Copyright (C) 2007-2008 Kristian Duske
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -8,7 +10,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -17,37 +19,28 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
-// net_udp.c
 
 #include "quakedef.h"
 
-#ifndef _WIN32
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
-#endif
-
-#ifdef _WIN32
-#define MAXHOSTNAMELEN 1000
-#define MSG_DONTWAIT 0
-#include <winsock.h>
-#endif
 #include <errno.h>
 
 #ifdef __sun__
 #include <sys/filio.h>
 #endif
 
-#ifdef NeXT
+#if defined(NeXT)
 #include <libc.h>
 #endif
 
-#ifdef __APPLE__
+#if defined (__APPLE__) || defined (MACOSX)
 #include <arpa/inet.h>
-#endif
+#endif /* __APPLE__ || MACOSX */
 
 extern int gethostname (char *, int);
 extern int close (int);
@@ -76,8 +69,28 @@ int UDP_Init (void)
 		return -1;
 
 	// determine my name & address
+#if defined (__APPLE__) || defined (MACOSX)
+
+	if (gethostname(buff, MAXHOSTNAMELEN) != 0)
+        {
+            Con_Printf ("UDP init failed. Disabling UDP...\n");
+            return (-1);
+        }
+
+        local = gethostbyname(buff);
+    	if (local == NULL)
+        {
+            Con_Printf ("UDP init failed. Disabling UDP...\n");
+            return (-1);
+        }
+
+#else        
+
 	gethostname(buff, MAXHOSTNAMELEN);
 	local = gethostbyname(buff);
+
+#endif /* __APPLE__ ||ÊMACOSX */
+
 	myAddr = *(int *)local->h_addr_list[0];
 
 	// if the quake hostname isn't set, set it to the machine name
@@ -94,7 +107,20 @@ int UDP_Init (void)
 	((struct sockaddr_in *)&broadcastaddr)->sin_addr.s_addr = INADDR_BROADCAST;
 	((struct sockaddr_in *)&broadcastaddr)->sin_port = htons(net_hostport);
 
-	UDP_GetSocketAddr (net_controlsocket, &addr);
+#if defined (__APPLE__) || defined (MACOSX)
+
+	if (UDP_GetSocketAddr (net_controlsocket, &addr) != 0)
+        {
+            Con_Printf ("UDP init failed. Disabling UDP...\n");
+            return (-1);
+        }
+
+#else
+
+        UDP_GetSocketAddr (net_controlsocket, &addr);
+
+#endif /* __APPLE__ || MACOSX */
+        
 	Q_strcpy(my_tcpip_address,  UDP_AddrToString (&addr));
 	colon = Q_strrchr (my_tcpip_address, ':');
 	if (colon)
@@ -146,10 +172,9 @@ int UDP_OpenSocket (int port)
 	if ((newsocket = socket (PF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
 		return -1;
 
-#if 0
 	if (ioctl (newsocket, FIONBIO, (char *)&_true) == -1)
 		goto ErrorReturn;
-#endif
+
 	address.sin_family = AF_INET;
 	address.sin_addr.s_addr = INADDR_ANY;
 	address.sin_port = htons(port);
@@ -255,15 +280,24 @@ int UDP_CheckNewConnections (void)
 
 //=============================================================================
 
+void get_qsockaddr(struct sockaddr *saddr, struct qsockaddr *qaddr)
+{
+    qaddr->sa_family = saddr->sa_family;
+    memcpy(&(qaddr->sa_data), &(saddr->sa_data), sizeof(qaddr->sa_data));
+}
+
 int UDP_Read (int socket, byte *buf, int len, struct qsockaddr *addr)
 {
-	int addrlen = sizeof (struct qsockaddr);
-	int ret;
+    static struct sockaddr saddr;
+	unsigned int	addrlen = sizeof (struct sockaddr);
+	int				ret;
 
-	ret = recvfrom (socket, buf, len, MSG_DONTWAIT, 
-                        (struct sockaddr *)addr, &addrlen);
+	ret = recvfrom (socket, buf, len, 0, &saddr, &addrlen);
+
 	if (ret == -1 && (errno == EWOULDBLOCK || errno == ECONNREFUSED))
 		return 0;
+    
+    get_qsockaddr(&saddr, addr);
 	return ret;
 }
 
@@ -308,8 +342,8 @@ int UDP_Write (int socket, byte *buf, int len, struct qsockaddr *addr)
 {
 	int ret;
 
-	ret = sendto (socket, buf, len, MSG_DONTWAIT,
-                      (struct sockaddr *)addr, sizeof(struct qsockaddr));
+	ret = sendto (socket, buf, len, 0, (struct sockaddr *)addr, sizeof(struct qsockaddr));
+
 	if (ret == -1 && errno == EWOULDBLOCK)
 		return 0;
 	return ret;
@@ -323,7 +357,11 @@ char *UDP_AddrToString (struct qsockaddr *addr)
 	int haddr;
 
 	haddr = ntohl(((struct sockaddr_in *)addr)->sin_addr.s_addr);
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf(buffer, 22, "%d.%d.%d.%d:%d", (haddr >> 24) & 0xff, (haddr >> 16) & 0xff, (haddr >> 8) & 0xff, haddr & 0xff, ntohs(((struct sockaddr_in *)addr)->sin_port));
+#else
 	sprintf(buffer, "%d.%d.%d.%d:%d", (haddr >> 24) & 0xff, (haddr >> 16) & 0xff, (haddr >> 8) & 0xff, haddr & 0xff, ntohs(((struct sockaddr_in *)addr)->sin_port));
+#endif /* __APPLE__ || MACOSX */
 	return buffer;
 }
 
@@ -347,11 +385,22 @@ int UDP_StringToAddr (char *string, struct qsockaddr *addr)
 
 int UDP_GetSocketAddr (int socket, struct qsockaddr *addr)
 {
-	int addrlen = sizeof(struct qsockaddr);
+	unsigned int addrlen = sizeof(struct qsockaddr);
 	unsigned int a;
 
 	Q_memset(addr, 0, sizeof(struct qsockaddr));
+
+#if defined (__APPLE__) || defined (MACOSX)
+
+	if (getsockname(socket, (struct sockaddr *)addr, &addrlen) != 0)
+            return (-1);
+            
+#else
+
 	getsockname(socket, (struct sockaddr *)addr, &addrlen);
+
+#endif /* __APPLE__ || MACOSX */
+
 	a = ((struct sockaddr_in *)addr)->sin_addr.s_addr;
 	if (a == 0 || a == inet_addr("127.0.0.1"))
 		((struct sockaddr_in *)addr)->sin_addr.s_addr = myAddr;
@@ -384,7 +433,7 @@ int UDP_GetAddrFromName(char *name, struct qsockaddr *addr)
 
 	if (name[0] >= '0' && name[0] <= '9')
 		return PartialIPAddress (name, addr);
-	
+
 	hostentry = gethostbyname (name);
 	if (!hostentry)
 		return -1;

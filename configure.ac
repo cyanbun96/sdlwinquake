@@ -88,7 +88,7 @@ AM_CONDITIONAL([MAKE_ASM], [test "$enable_asm" = yes])
 AM_COND_IF([MAKE_ASM], 
 	AC_DEFINE([USE_ASM],[],[Define to use i686 assembly sources]))
 
-CPPFLAGS="$CPPFLAGS -DELF"
+CPPFLAGS="$CPPFLAGS"
 
 # Finally create all the generated files
 AC_CONFIG_FILES([Makefile])
