@@ -1382,7 +1382,7 @@ int COM_FindFile (char *filename, int *handle, FILE **file)
 		Sys_Error ("COM_FindFile: both handle and file set");
 	if (!file && !handle)
 		Sys_Error ("COM_FindFile: neither handle or file set");
-		
+
 //
 // search through the path, one element at a time
 //
@@ -1420,25 +1420,25 @@ int COM_FindFile (char *filename, int *handle, FILE **file)
 				}
 		}
 		else
-		{               
+		{
 	// check a file in the directory tree
 			if (!static_registered)
 			{       // if not a registered version, don't ever go beyond base
 				if ( strchr (filename, '/') || strchr (filename,'\\'))
 					continue;
 			}
-			
+
 			sprintf (netpath, "%s/%s",search->filename, filename);
-			
+
 			findtime = Sys_FileTime (netpath);
 			if (findtime == -1)
 				continue;
-				
+
 		// see if the file needs to be updated in the cache
 			if (!com_cachedir[0])
 				strcpy (cachepath, netpath);
 			else
-			{	
+			{
 #if defined(_WIN32)
 				if ((strlen(netpath) < 2) || (netpath[1] != ':'))
 					sprintf (cachepath,"%s%s", com_cachedir, netpath);
@@ -1449,11 +1449,11 @@ int COM_FindFile (char *filename, int *handle, FILE **file)
 #endif
 
 				cachetime = Sys_FileTime (cachepath);
-			
+
 				if (cachetime < findtime)
 					COM_CopyFile (netpath, cachepath);
 				strcpy (netpath, cachepath);
-			}	
+			}
 
 			Sys_Printf ("FindFile: %s\n",netpath);
 			com_filesize = Sys_FileOpenRead (netpath, &i);
@@ -1466,11 +1466,11 @@ int COM_FindFile (char *filename, int *handle, FILE **file)
 			}
 			return com_filesize;
 		}
-		
+
 	}
-	
+
 	Sys_Printf ("FindFile: can't find %s\n", filename);
-	
+
 	if (handle)
 		*handle = -1;
 	else
