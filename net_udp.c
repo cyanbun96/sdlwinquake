@@ -23,11 +23,19 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 
 #include <sys/types.h>
+#ifndef _WIN32
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
+#endif
+
+#ifdef _WIN32
+#define MAXHOSTNAMELEN 1000
+#include <winsock.h>
+#endif
+
 #include <errno.h>
 
 #ifdef __sun__
