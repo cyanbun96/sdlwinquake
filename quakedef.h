@@ -33,11 +33,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 //define	PARANOID			// speed sapping error checking
 
-#ifdef QUAKE2
-#define	GAMENAME	"id1"		// directory to look in by default
-#else
 #define	GAMENAME	"id1"
-#endif
 
 #include <math.h>
 #include <string.h>
@@ -84,10 +80,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 // per-level limits
 //
-#define	MAX_EDICTS		600			// FIXME: ouch! ouch! ouch!
+#define	MAX_EDICTS		32000			// FIXME: ouch! ouch! ouch!
 #define	MAX_LIGHTSTYLES	64
-#define	MAX_MODELS		256			// these are sent over the net as bytes
-#define	MAX_SOUNDS		256			// so they cannot be blindly increased
+#define	MAX_MODELS		2048			// these are sent over the net as bytes
+#define	MAX_SOUNDS		2048			// so they cannot be blindly increased
 
 #define	SAVEGAME_COMMENT_LENGTH	39
 
@@ -200,10 +196,10 @@ typedef struct
 {
 	vec3_t	origin;
 	vec3_t	angles;
-	int		modelindex;
-	int		frame;
-	int		colormap;
-	int		skin;
+	unsigned short 	modelindex; //johnfitz -- was int
+	unsigned short 	frame; //johnfitz -- was int
+	unsigned char 	colormap; //johnfitz -- was int
+	unsigned char 	skin; //johnfitz -- was int
 	int		effects;
 } entity_state_t;
 
@@ -222,12 +218,8 @@ typedef struct
 #include "progs.h"
 #include "server.h"
 
-#ifdef GLQUAKE
-#include "gl_model.h"
-#else
 #include "model.h"
 #include "d_iface.h"
-#endif
 
 #include "input.h"
 #include "world.h"
@@ -238,9 +230,6 @@ typedef struct
 #include "crc.h"
 #include "cdaudio.h"
 
-#ifdef GLQUAKE
-#include "glquake.h"
-#endif
 
 //=============================================================================
 

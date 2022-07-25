@@ -31,7 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	MAX_MAP_PLANES		32767
 #define	MAX_MAP_NODES		32767		// because negative shorts are contents
 #define	MAX_MAP_CLIPNODES	32767		//
-#define	MAX_MAP_LEAFS		8192
+#define	MAX_MAP_LEAFS		32767
 #define	MAX_MAP_VERTS		65535
 #define	MAX_MAP_FACES		65535
 #define	MAX_MAP_MARKSURFACES 65535
@@ -90,7 +90,7 @@ typedef struct
 
 typedef struct
 {
-	int			version;	
+	int			version;
 	lump_t		lumps[HEADER_LUMPS];
 } dheader_t;
 
@@ -191,7 +191,7 @@ typedef struct
 	short		side;
 
 	int			firstedge;		// we must support > 64k edges
-	short		numedges;	
+	short		numedges;
 	short		texinfo;
 
 // lighting info

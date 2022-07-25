@@ -32,7 +32,7 @@ int 		con_linewidth;
 
 float		con_cursorspeed = 4;
 
-#define		CON_TEXTSIZE	16384
+#define		CON_TEXTSIZE	65536
 
 qboolean 	con_forcedup;		// because no entities to refresh
 
@@ -222,7 +222,11 @@ void Con_Init (void)
 		if (strlen (com_gamedir) < (MAXGAMEDIRLEN - strlen (t2)))
 		{
 			sprintf (temp, "%s%s", com_gamedir, t2);
-			unlink (temp);
+#ifdef _WIN32
+			_unlink (temp);
+#else
+			unlink(temp);
+#endif
 		}
 	}
 

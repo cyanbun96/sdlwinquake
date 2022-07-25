@@ -149,11 +149,11 @@ void InsertLinkAfter (link_t *l, link_t *after)
 ============================================================================
 */
 
-void Q_memset (void *dest, int fill, int count)
+void Q_memset (void *dest, int fill, size_t count)
 {
-	int             i;
+	size_t		i;
 
-	if ( (((long)dest | count) & 3) == 0)
+	if ( (((size_t)dest | count) & 3) == 0)
 	{
 		count >>= 2;
 		fill = fill | (fill<<8) | (fill<<16) | (fill<<24);
@@ -165,11 +165,11 @@ void Q_memset (void *dest, int fill, int count)
 			((byte *)dest)[i] = fill;
 }
 
-void Q_memcpy (void *dest, void *src, int count)
+void Q_memcpy (void *dest, const void *src, size_t count)
 {
-	int             i;
+	size_t		i;
 
-	if (( ( (long)dest | (long)src | count) & 3) == 0 )
+	if (( ( (size_t)dest | (size_t)src | count) & 3) == 0 )
 	{
 		count>>=2;
 		for (i=0 ; i<count ; i++)
@@ -180,7 +180,7 @@ void Q_memcpy (void *dest, void *src, int count)
 			((byte *)dest)[i] = ((byte *)src)[i];
 }
 
-int Q_memcmp (void *m1, void *m2, int count)
+int Q_memcmp (const void *m1, const void *m2, size_t count)
 {
 	while(count)
 	{
@@ -191,7 +191,7 @@ int Q_memcmp (void *m1, void *m2, int count)
 	return 0;
 }
 
-void Q_strcpy (char *dest, char *src)
+void Q_strcpy (char *dest, const char *src)
 {
 	while (*src)
 	{
@@ -200,7 +200,7 @@ void Q_strcpy (char *dest, char *src)
 	*dest++ = 0;
 }
 
-void Q_strncpy (char *dest, char *src, int count)
+void Q_strncpy (char *dest, const char *src, int count)
 {
 	while (*src && count--)
 	{
@@ -210,7 +210,7 @@ void Q_strncpy (char *dest, char *src, int count)
 		*dest++ = 0;
 }
 
-int Q_strlen (char *str)
+int Q_strlen (const char *str)
 {
 	int             count;
 
@@ -221,22 +221,22 @@ int Q_strlen (char *str)
 	return count;
 }
 
-char *Q_strrchr(char *s, char c)
+char *Q_strrchr(const char *s, char c)
 {
     int len = Q_strlen(s);
     s += len;
     while (len--)
-	if (*--s == c) return s;
-    return 0;
+	if (*--s == c) return (char *)s;
+    return NULL;
 }
 
-void Q_strcat (char *dest, char *src)
+void Q_strcat (char *dest, const char *src)
 {
 	dest += Q_strlen(dest);
 	Q_strcpy (dest, src);
 }
 
-int Q_strcmp (char *s1, char *s2)
+int Q_strcmp (const char *s1, const char *s2)
 {
 	while (1)
 	{
@@ -251,7 +251,7 @@ int Q_strcmp (char *s1, char *s2)
 	return -1;
 }
 
-int Q_strncmp (char *s1, char *s2, int count)
+int Q_strncmp (const char *s1, const char *s2, int count)
 {
 	while (1)
 	{
@@ -268,7 +268,7 @@ int Q_strncmp (char *s1, char *s2, int count)
 	return -1;
 }
 
-int Q_strncasecmp (char *s1, char *s2, int n)
+int Q_strncasecmp (const char *s1, const char *s2, int n)
 {
 	int             c1, c2;
 
@@ -298,12 +298,12 @@ int Q_strncasecmp (char *s1, char *s2, int n)
 	return -1;
 }
 
-int Q_strcasecmp (char *s1, char *s2)
+int Q_strcasecmp (const char *s1, const char *s2)
 {
 	return Q_strncasecmp (s1, s2, 99999);
 }
 
-int Q_atoi (char *str)
+int Q_atoi (const char *str)
 {
 	int             val;
 	int             sign;
@@ -362,7 +362,7 @@ int Q_atoi (char *str)
 }
 
 
-float Q_atof (char *str)
+float Q_atof (const char *str)
 {
 	double			val;
 	int             sign;
@@ -595,15 +595,41 @@ void MSG_WriteString (sizebuf_t *sb, char *s)
 		SZ_Write (sb, s, Q_strlen(s)+1);
 }
 
+//johnfitz -- original behavior, 13.3 fixed point coords, max range +-4096
+void MSG_WriteCoord16 (sizebuf_t *sb, float f)
+{
+	MSG_WriteShort (sb, Q_rint(f*8));
+}
+
+//johnfitz -- 16.8 fixed point coords, max range +-32768
+void MSG_WriteCoord24 (sizebuf_t *sb, float f)
+{
+	MSG_WriteShort (sb, f);
+	MSG_WriteByte (sb, (int)(f*255)%255);
+}
+
+//johnfitz -- 32-bit float coords
+void MSG_WriteCoord32f (sizebuf_t *sb, float f)
+{
+	MSG_WriteFloat (sb, f);
+}
+
 void MSG_WriteCoord (sizebuf_t *sb, float f)
 {
-	MSG_WriteShort (sb, (int)(f*8));
+	MSG_WriteCoord16 (sb, f);
 }
 
 void MSG_WriteAngle (sizebuf_t *sb, float f)
 {
-	MSG_WriteByte (sb, ((int)f*256/360) & 255);
+	MSG_WriteByte (sb, Q_rint(f * 256.0 / 360.0) & 255); //johnfitz -- use Q_rint instead of (int)
 }
+
+//johnfitz -- for PROTOCOL_FITZQUAKE
+void MSG_WriteAngle16 (sizebuf_t *sb, float f)
+{
+	MSG_WriteShort (sb, Q_rint(f * 65536.0 / 360.0) & 65535);
+}
+//johnfitz
 
 //
 // reading functions
@@ -728,15 +754,40 @@ char *MSG_ReadString (void)
 	return string;
 }
 
-float MSG_ReadCoord (void)
+//johnfitz -- original behavior, 13.3 fixed point coords, max range +-4096
+float MSG_ReadCoord16 (void)
 {
 	return MSG_ReadShort() * (1.0/8);
+}
+
+//johnfitz -- 16.8 fixed point coords, max range +-32768
+float MSG_ReadCoord24 (void)
+{
+	return MSG_ReadShort() + MSG_ReadByte() * (1.0/255);
+}
+
+//johnfitz -- 32-bit float coords
+float MSG_ReadCoord32f (void)
+{
+	return MSG_ReadFloat();
+}
+
+float MSG_ReadCoord (void)
+{
+	return MSG_ReadCoord16();
 }
 
 float MSG_ReadAngle (void)
 {
 	return MSG_ReadChar() * (360.0/256);
 }
+
+//johnfitz -- for PROTOCOL_FITZQUAKE
+float MSG_ReadAngle16 (void)
+{
+	return MSG_ReadShort() * (360.0 / 65536);
+}
+//johnfitz
 
 
 
@@ -876,7 +927,7 @@ void COM_FileBase (char *in, char *out)
 	while (s != in && *s != '.')
 		s--;
 
-	for (s2 = s ; *s2 && *s2 != '/' ; s2--)
+	for (s2 = s ; s2 != in && *s2 && *s2 != '/' ; s2--)
 	;
 
 	if (s-s2 < 2)
@@ -1091,7 +1142,10 @@ void COM_InitArgv (int argc, char **argv)
 			break;
 	}
 
-	com_cmdline[n-1] = 0; //johnfitz -- kill the trailing space
+	if (n > 0 && com_cmdline[n-1] == ' ')
+		com_cmdline[n-1] = 0; //johnfitz -- kill the trailing space
+
+	Con_Printf("\nCommand line: %s",com_cmdline);
 
 	safe = false;
 
