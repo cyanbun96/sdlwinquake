@@ -194,21 +194,8 @@ LNX_SRCS =			\
 	vid_x.c
 
 EXTRA_DIST =			\
-	README			\
+	README.md		\
 	README.SDL		\
-	3dfx.txt		\
-	Makefile.Solaris	\
-	Makefile.linuxi386	\
-	README.Solaris		\
-	WinQuake.dsp		\
-	WinQuake.dsw		\
-	WinQuake.mdp		\
-	WinQuake.ncb		\
-	WinQuake.opt		\
-	WinQuake.plg		\
-	cwsdpmi.exe		\
-	glqnotes.txt		\
-	makezip.bat		\
 	progdefs.q1		\
 	progdefs.q2		\
 	q.bat			\

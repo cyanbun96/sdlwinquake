@@ -282,6 +282,10 @@ void CL_PlayDemo_f (void)
 		return;
 	}
 
+	// withdraw console/menu
+	if (key_dest == key_console)
+		key_dest = key_game;
+
 //
 // disconnect from server
 //

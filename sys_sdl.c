@@ -1,20 +1,21 @@
 /* -*- Mode: C; tab-width: 4 -*- */ 
 
 #include "SDL.h"
+#ifndef _WIN32
 #include <unistd.h>
+#include <sys/time.h>
+#endif
 #include <signal.h>
 #include <stdlib.h>
 #include <limits.h>
-#include <sys/time.h>
 #include <sys/types.h>
-#include <unistd.h>
 #include <fcntl.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
-#ifndef __WIN32__
+#ifndef _WIN32
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <sys/stat.h>
