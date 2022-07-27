@@ -967,4 +967,3 @@ void CL_ParseServerMessage (void)
 		}
 	}
 }
-

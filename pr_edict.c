@@ -1129,6 +1129,7 @@ int NUM_FOR_EDICT(edict_t *e)
 
 //===========================================================================
 
+
 #define	PR_STRING_ALLOCSLOTS	256
 
 static void PR_AllocStringSlots (void)
@@ -1138,7 +1139,7 @@ static void PR_AllocStringSlots (void)
 	pr_knownstrings = (char **) Z_Realloc (pr_knownstrings, pr_maxknownstrings * sizeof(char *));
 }
 
-char *PR_GetString (int num)
+const char *PR_GetString (int num)
 {
 	if (num >= 0 && num < pr_stringssize)
 		return pr_strings + num;
@@ -1158,7 +1159,7 @@ char *PR_GetString (int num)
 	}
 }
 
-int PR_SetEngineString (char *s)
+int PR_SetEngineString (const char *s)
 {
 	int		i;
 
@@ -1177,7 +1178,7 @@ int PR_SetEngineString (char *s)
 			return -1 - i;
 	}
 	// new unknown engine string
-	//Con_DPrintf ("PR_SetEngineString: new engine string %p\n", s);
+	Con_DPrintf ("PR_SetEngineString: new engine string %p\n", s);
 #if 0
 	for (i = 0; i < pr_numknownstrings; i++)
 	{
@@ -1214,7 +1215,7 @@ int PR_AllocString (int size, char **ptr)
 //	}
 	pr_knownstrings[i] = (char *)Hunk_AllocName(size, "string");
 	if (ptr)
-		*ptr = pr_knownstrings[i];
+		*ptr = (char *) pr_knownstrings[i];
 	return -1 - i;
 }
 
