@@ -17,7 +17,7 @@ See `README.SDL` for the original porter's comments.
 Notes
 -----
 
-Currently plays demos at startup, but crashes when starting a new game on my x86-64 Linux system. Presumed to be some lingering 64-bit cleanness or uninitialized data issue. Investigating.
+I have pulled in some 64bit fixes from older Fitzquake builds from 2010.  Seems to be ok, just when you start a new game it has "illegible server..." error.  There is also a crash on the third demo just as you enter the water.  Fixes will happen slowly, it doesn't help that the water crash does not happen while in Debug mode -_-
 
 License
 -------
