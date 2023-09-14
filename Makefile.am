@@ -1,9 +1,9 @@
 
-bin_PROGRAMS = goodlookingquake
+bin_PROGRAMS = sdlwinquake
 
-goodlookingquake_LDADD = @MATHLIB@ @INETLIB@
+sdlwinquake_LDADD = @MATHLIB@ @INETLIB@
 
-goodlookingquake_SOURCES =		\
+sdlwinquake_SOURCES =		\
 	adivtab.h		\
 	anorm_dots.h		\
 	anorms.h		\

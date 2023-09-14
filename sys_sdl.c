@@ -445,9 +445,8 @@ Sys_MakeCodeWriteable
 */
 void Sys_MakeCodeWriteable(unsigned long startaddr, unsigned long length)
 {
-	unsigned long addr;
-
 #ifdef _WIN32
+	unsigned long addr;
 	DWORD oldProtect;
 	addr = startaddr;
 	if (!VirtualProtect((LPVOID)addr, length, PAGE_EXECUTE_READWRITE, &oldProtect)) {
@@ -459,10 +458,8 @@ void Sys_MakeCodeWriteable(unsigned long startaddr, unsigned long length)
 	int psize = getpagesize();
 
 	fprintf(stderr, "writable code %lx-%lx\n", startaddr, startaddr + length);
-	@@ - 462, 6 + 471, 6 @@ void Sys_MakeCodeWriteable(unsigned long startaddr, unsigned long length)
-
-		if (r < 0)
-			Sys_Error("Protection change failed\n");
+	if (r < 0)
+		Sys_Error("Protection change failed\n");
 
 #endif
 }
