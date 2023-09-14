@@ -562,11 +562,7 @@ void S_ClearBuffer (void)
 {
 	int		clear;
 		
-#ifdef _WIN32
-	if (!sound_started || !shm || (!shm->buffer && !pDSBuf))
-#else
 	if (!sound_started || !shm || !shm->buffer)
-#endif
 		return;
 
 	if (shm->samplebits == 8)
@@ -574,43 +570,7 @@ void S_ClearBuffer (void)
 	else
 		clear = 0;
 
-#ifdef _WIN32
-	if (pDSBuf)
-	{
-		DWORD	dwSize;
-		DWORD	*pData;
-		int		reps;
-		HRESULT	hresult;
-
-		reps = 0;
-
-		while ((hresult = pDSBuf->lpVtbl->Lock(pDSBuf, 0, gSndBufSize, &pData, &dwSize, NULL, NULL, 0)) != DS_OK)
-		{
-			if (hresult != DSERR_BUFFERLOST)
-			{
-				Con_Printf ("S_ClearBuffer: DS::Lock Sound Buffer Failed\n");
-				S_Shutdown ();
-				return;
-			}
-
-			if (++reps > 10000)
-			{
-				Con_Printf ("S_ClearBuffer: DS: couldn't restore buffer\n");
-				S_Shutdown ();
-				return;
-			}
-		}
-
-		Q_memset(pData, clear, shm->samples * shm->samplebits/8);
-
-		pDSBuf->lpVtbl->Unlock(pDSBuf, pData, dwSize, NULL, 0);
-	
-	}
-	else
-#endif
-	{
-		Q_memset(shm->buffer, clear, shm->samples * shm->samplebits/8);
-	}
+	Q_memset(shm->buffer, clear, shm->samples * shm->samplebits/8);
 }
 
 
@@ -845,11 +805,6 @@ void GetSoundtime(void)
 
 void S_ExtraUpdate (void)
 {
-
-#ifdef _WIN32
-	IN_Accumulate ();
-#endif
-
 	if (snd_noextraupdate.value)
 		return;		// don't pollute timings
 	S_Update_();
@@ -857,53 +812,7 @@ void S_ExtraUpdate (void)
 
 void S_Update_(void)
 {
-#ifndef SDL
 
-	unsigned        endtime;
-	int				samps;
-	
-	if (!sound_started || (snd_blocked > 0))
-		return;
-
-// Updates DMA time
-	GetSoundtime();
-
-// check to make sure that we haven't overshot
-	if (paintedtime < soundtime)
-	{
-		//Con_Printf ("S_Update_ : overflow\n");
-		paintedtime = soundtime;
-	}
-
-// mix ahead of current position
-	endtime = soundtime + _snd_mixahead.value * shm->speed;
-	samps = shm->samples >> (shm->channels-1);
-	if (endtime - soundtime > samps)
-		endtime = soundtime + samps;
-
-#ifdef _WIN32
-// if the buffer was lost or stopped, restore it and/or restart it
-	{
-		DWORD	dwStatus;
-
-		if (pDSBuf)
-		{
-			if (pDSBuf->lpVtbl->GetStatus (pDSBuf, &dwStatus) != DD_OK)
-				Con_Printf ("Couldn't get sound buffer status\n");
-			
-			if (dwStatus & DSBSTATUS_BUFFERLOST)
-				pDSBuf->lpVtbl->Restore (pDSBuf);
-			
-			if (!(dwStatus & DSBSTATUS_PLAYING))
-				pDSBuf->lpVtbl->Play(pDSBuf, 0, 0, DSBPLAY_LOOPING);
-		}
-	}
-#endif
-
-	S_PaintChannels (endtime);
-
-	SNDDMA_Submit ();
-#endif /* ! SDL */
 }
 
 /*

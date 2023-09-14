@@ -19,3 +19,14 @@ aclocal.m4
 goodlookingquake
 *.m4
 goodlookingquake
+*.obj
+*.tlog
+*.pdb
+*.ipdb
+*.iobj
+*.recipe
+*.exe
+*.log
+*.dll
+*.txt
+*.idb

@@ -97,14 +97,6 @@ int WIPX_Init (void)
 		}
 	}
 
-	if ((net_controlsocket = WIPX_OpenSocket (0)) == -1)
-	{
-		Con_Printf("WIPX_Init: Unable to open control socket\n");
-		if (--winsock_initialized == 0)
-			pWSACleanup ();
-		return -1;
-	}
-
 	((struct sockaddr_ipx *)&broadcastaddr)->sa_family = AF_IPX;
 	memset(((struct sockaddr_ipx *)&broadcastaddr)->sa_netnum, 0, 4);
 	memset(((struct sockaddr_ipx *)&broadcastaddr)->sa_nodenum, 0xff, 6);
@@ -243,7 +235,7 @@ int WIPX_Read (int handle, byte *buf, int len, struct qsockaddr *addr)
 	ret = precvfrom (socket, packetBuffer, len+4, 0, (struct sockaddr *)addr, &addrlen);
 	if (ret == -1)
 	{
-		int errno = pWSAGetLastError();
+		errno = pWSAGetLastError();
 
 		if (errno == WSAEWOULDBLOCK || errno == WSAECONNREFUSED)
 			return 0;
@@ -357,7 +349,7 @@ int WIPX_GetSocketAddr (int handle, struct qsockaddr *addr)
 	Q_memset(addr, 0, sizeof(struct qsockaddr));
 	if(pgetsockname(socket, (struct sockaddr *)addr, &addrlen) != 0)
 	{
-		int errno = pWSAGetLastError();
+		errno = pWSAGetLastError();
 	}
 
 	return 0;

@@ -901,7 +901,8 @@ void R_EdgeDrawing (void)
 		R_SurfacePatch ();
 	}
 
-	R_BeginEdgeFrame ();
+	// TODO
+	R_BeginEdgeFrame (); // Windows crashes here for some reason...
 
 	if (r_dspeeds.value)
 	{

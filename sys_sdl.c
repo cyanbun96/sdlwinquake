@@ -1,10 +1,21 @@
 /* -*- Mode: C; tab-width: 4 -*- */ 
 
 #include "SDL.h"
+
 #ifndef _WIN32
 #include <unistd.h>
 #include <sys/time.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#include <sys/stat.h>
+#include <sys/wait.h>
+#include <sys/mman.h>
+#else
+#include <windows.h>
+#include <direct.h>
+#include <time.h>
 #endif
+
 #include <signal.h>
 #include <stdlib.h>
 #include <limits.h>
@@ -15,13 +26,6 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
-#ifndef _WIN32
-#include <sys/ipc.h>
-#include <sys/shm.h>
-#include <sys/stat.h>
-#include <sys/wait.h>
-#include <sys/mman.h>
-#endif
 
 #include "quakedef.h"
 
@@ -270,7 +274,7 @@ int	Sys_FileTime (char *path)
 void Sys_mkdir (char *path)
 {
 #ifdef __WIN32__
-    mkdir (path);
+    _mkdir (path);
 #else
     mkdir (path, 0777);
 #endif
@@ -439,21 +443,26 @@ int main (int c, char **v)
 Sys_MakeCodeWriteable
 ================
 */
-void Sys_MakeCodeWriteable (unsigned long startaddr, unsigned long length)
+void Sys_MakeCodeWriteable(unsigned long startaddr, unsigned long length)
 {
+	unsigned long addr;
 
+#ifdef _WIN32
+	DWORD oldProtect;
+	addr = startaddr;
+	if (!VirtualProtect((LPVOID)addr, length, PAGE_EXECUTE_READWRITE, &oldProtect)) {
+		Sys_Error("Protection change failed\n");
+	}
+#else
 	int r;
 	unsigned long addr;
 	int psize = getpagesize();
 
-	fprintf(stderr, "writable code %lx-%lx\n", startaddr, startaddr+length);
+	fprintf(stderr, "writable code %lx-%lx\n", startaddr, startaddr + length);
+	@@ - 462, 6 + 471, 6 @@ void Sys_MakeCodeWriteable(unsigned long startaddr, unsigned long length)
 
-	addr = startaddr & ~(psize-1);
+		if (r < 0)
+			Sys_Error("Protection change failed\n");
 
-	r = mprotect((char*)addr, length + startaddr - addr, 7);
-
-	if (r < 0)
-    		Sys_Error("Protection change failed\n");
-
+#endif
 }
-

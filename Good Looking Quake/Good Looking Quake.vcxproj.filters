@@ -15,9 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\cd_sdl.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\chase.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -105,9 +102,6 @@
     <ClCompile Include="..\model.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\net_bsd.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\net_dgrm.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -117,13 +111,7 @@
     <ClCompile Include="..\net_main.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\net_udp.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\net_vcr.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\net_wso.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\pr_cmds.c">
@@ -223,6 +211,24 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\zone.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\d_vars.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\cd_null.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\nonintel.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\net_win.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\net_wins.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\net_wipx.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
