@@ -1,6 +1,17 @@
 SDLWinQuake
 ==============================
 
+CyanBun96: My fork aims to bring it closer to being "Chocolate Quake", with Linux being the primary targeted OS.
+
+Changes from upstream:
+-1080p max resolution
+
+Planned:
+-Integer scaling
+-Mouse sensitivity for widescreen resolutions
+
+Original readme below.
+
 This is SDLWinQuake, a port of id Software's Quake engine to the Simple Direct-media Layer 1.2.  The Autotools build system has been updated to 2023 standards more or less.  There is also a build.sh file (for macOS) and a Windows VS2022 project file with dependencies included.
 
 Installation
