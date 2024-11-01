@@ -148,7 +148,7 @@ void    VID_Init (unsigned char *palette)
     
     if (vid.width > 1280 || vid.height > 1024)
     {
-    	Sys_Error("Maximum Resolution is 1280 width and 1024 height");
+    	puts("WARNING: Vanilla Maximum Resolution is 1280 width and 1024 height");
     }
 
     // Initialize display 
