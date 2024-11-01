@@ -4,10 +4,13 @@ SDLWinQuake
 CyanBun96: My fork aims to bring it closer to being "Chocolate Quake", with Linux being the primary targeted OS.
 
 Changes from upstream:
+
 -1080p max resolution
 
 Planned:
+
 -Integer scaling
+
 -Mouse sensitivity for widescreen resolutions
 
 Original readme below.
