@@ -5,11 +5,10 @@ CyanBun96: My fork aims to bring it closer to being "Chocolate Quake", with Linu
 
 Changes from upstream:
 
--1080p max resolution
+-WIP SDL2 port
+-Integer scaling
 
 Planned:
-
--Integer scaling
 
 -Mouse sensitivity for widescreen resolutions
 

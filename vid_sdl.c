@@ -1,12 +1,16 @@
 // vid_sdl.h -- sdl video driver 
 
-#include "SDL.h"
+#include <SDL2/SDL.h>
 #include "quakedef.h"
 #include "d_local.h"
 
+SDL_Surface *windowSurface;
+SDL_Surface *scaleBuffer;
+SDL_Window *window;
 viddef_t    vid;                // global video state
 unsigned short  d_8to16table[256];
 
+#define SCALE               4
 #define BASEWIDTH           320
 #define BASEHEIGHT          240
 
@@ -43,7 +47,7 @@ void    VID_SetPalette (unsigned char *palette)
 		colors[i].b = *palette++;
 	}
 
-	SDL_SetColors(screen, colors, 0, 256);
+	SDL_SetPaletteColors(screen->format->palette, colors, 0, 256);
 }
 
 void    VID_ShiftPalette (unsigned char *palette)
@@ -102,9 +106,8 @@ void    VID_Init (unsigned char *palette)
     char caption[50];
 
     // Load the SDL library
-    if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO|SDL_INIT_CDROM) < 0)
+    if(SDL_Init(SDL_INIT_VIDEO) < 0)
         Sys_Error("VID: Couldn't load SDL: %s", SDL_GetError());
-
     // Set up display mode (width and height)
     vid.width = BASEWIDTH;
     vid.height = BASEHEIGHT;
@@ -137,29 +140,37 @@ void    VID_Init (unsigned char *palette)
     }
 
     // Set video width, height and flags
-    flags = (SDL_SWSURFACE|SDL_HWPALETTE|SDL_FULLSCREEN);
+    flags = (SDL_WINDOW_FULLSCREEN);
 
     if ( COM_CheckParm ("-fullscreen") )
-        flags |= SDL_FULLSCREEN;
+        flags |= SDL_WINDOW_FULLSCREEN;
 
-    if ( COM_CheckParm ("-window") ) {
-        flags &= ~SDL_FULLSCREEN;
-    }
+    if ( COM_CheckParm ("-window") )
+        flags &= ~SDL_WINDOW_FULLSCREEN;
     
     if (vid.width > 1280 || vid.height > 1024)
     {
-    	puts("WARNING: Vanilla Maximum Resolution is 1280 width and 1024 height");
+    	Sys_Error("Maximum Resolution is 1280 width and 1024 height");
     }
+    int scale = 4;
+    window = SDL_CreateWindow("SDLWinQuake",
+                                          SDL_WINDOWPOS_CENTERED,
+                                          SDL_WINDOWPOS_CENTERED,
+                                          1920, 1080,
+                                          flags);
+    screen = SDL_CreateRGBSurfaceWithFormat(0, vid.width, vid.height, 8, SDL_PIXELFORMAT_INDEX8);
+    scaleBuffer = SDL_CreateRGBSurfaceWithFormat(0, vid.width, vid.height, 8, SDL_GetWindowPixelFormat(window));
+    windowSurface = SDL_GetWindowSurface(window);
+    SDL_SetSurfaceBlendMode(screen, SDL_BLENDMODE_NONE);
+    SDL_SetSurfaceBlendMode(scaleBuffer, SDL_BLENDMODE_NONE);
+    SDL_SetSurfaceBlendMode(windowSurface, SDL_BLENDMODE_NONE);
 
-    // Initialize display 
-    screen = SDL_SetVideoMode(vid.width, vid.height, 8, flags);
     if (!screen)
         Sys_Error("VID: Couldn't set video mode: %s\n", SDL_GetError());
+    SDL_UpdateWindowSurface(window);
         
-    VID_SetPalette(palette);
-    
     sprintf(caption, "SDLWinQuake - Version %4.2f", VERSION);
-    SDL_WM_SetCaption((const char* )&caption, (const char*)&caption);
+    SDL_SetWindowTitle(window, (const char*)&caption);
     
     // now know everything we need to know about the buffer
     VID_SetPalette(palette);
@@ -233,7 +244,11 @@ void    VID_Update (vrect_t *rects)
         sdlrects[i].h = rect->height;
         ++i;
     }
-    SDL_UpdateRects(screen, n, sdlrects);
+    SDL_Rect srcRect = {0, 0, screen->w, screen->h}; // Source rectangle
+    SDL_Rect destRect = {0, 0, screen->w*SCALE, screen->h*SCALE};
+    SDL_UpperBlit(screen, NULL, scaleBuffer, NULL);
+    SDL_UpperBlitScaled(scaleBuffer, NULL, windowSurface, NULL);
+    SDL_UpdateWindowSurface(window);
 }
 
 /*
@@ -267,7 +282,7 @@ void D_EndDirectRect (int x, int y, int width, int height)
 {
     if (!screen) return;
     if (x < 0) x = screen->w+x-1;
-    SDL_UpdateRect(screen, x, y, width, height);
+    //TODO SDL SDL_UpdateRect(screen, x, y, width, height);
 }
 
 
@@ -281,8 +296,8 @@ void Sys_SendKeyEvents(void)
 {
     SDL_Event event;
     int sym, state;
-     int modstate;
-
+    int modstate;
+    //TODO SDL 
     while (SDL_PollEvent(&event))
     {
         switch (event.type) {
@@ -308,7 +323,7 @@ void Sys_SendKeyEvents(void)
                    case SDLK_F10: sym = K_F10; break;
                    case SDLK_F11: sym = K_F11; break;
                    case SDLK_F12: sym = K_F12; break;
-                   case SDLK_BREAK:
+                   //case SDLK_BREAK:
                    case SDLK_PAUSE: sym = K_PAUSE; break;
                    case SDLK_UP: sym = K_UPARROW; break;
                    case SDLK_DOWN: sym = K_DOWNARROW; break;
@@ -325,40 +340,40 @@ void Sys_SendKeyEvents(void)
                    case SDLK_LCTRL: sym = K_CTRL; break;
                    case SDLK_RALT:
                    case SDLK_LALT: sym = K_ALT; break;
-                   case SDLK_KP0: 
+                   case SDLK_KP_0: 
                        if(modstate & KMOD_NUM) sym = K_INS; 
                        else sym = SDLK_0;
                        break;
-                   case SDLK_KP1:
+                   case SDLK_KP_1:
                        if(modstate & KMOD_NUM) sym = K_END;
                        else sym = SDLK_1;
                        break;
-                   case SDLK_KP2:
+                   case SDLK_KP_2:
                        if(modstate & KMOD_NUM) sym = K_DOWNARROW;
                        else sym = SDLK_2;
                        break;
-                   case SDLK_KP3:
+                   case SDLK_KP_3:
                        if(modstate & KMOD_NUM) sym = K_PGDN;
                        else sym = SDLK_3;
                        break;
-                   case SDLK_KP4:
+                   case SDLK_KP_4:
                        if(modstate & KMOD_NUM) sym = K_LEFTARROW;
                        else sym = SDLK_4;
                        break;
-                   case SDLK_KP5: sym = SDLK_5; break;
-                   case SDLK_KP6:
+                   case SDLK_KP_5: sym = SDLK_5; break;
+                   case SDLK_KP_6:
                        if(modstate & KMOD_NUM) sym = K_RIGHTARROW;
                        else sym = SDLK_6;
                        break;
-                   case SDLK_KP7:
+                   case SDLK_KP_7:
                        if(modstate & KMOD_NUM) sym = K_HOME;
                        else sym = SDLK_7;
                        break;
-                   case SDLK_KP8:
+                   case SDLK_KP_8:
                        if(modstate & KMOD_NUM) sym = K_UPARROW;
                        else sym = SDLK_8;
                        break;
-                   case SDLK_KP9:
+                   case SDLK_KP_9:
                        if(modstate & KMOD_NUM) sym = K_PGUP;
                        else sym = SDLK_9;
                        break;
@@ -384,12 +399,13 @@ void Sys_SendKeyEvents(void)
                      (event.motion.y != (vid.height/2)) ) {
                     mouse_x = event.motion.xrel*10;
                     mouse_y = event.motion.yrel*10;
-                    if ( (event.motion.x < ((vid.width/2)-(vid.width/4))) ||
+		    //TODO SDL
+                    /*if ( (event.motion.x < ((vid.width/2)-(vid.width/4))) ||
                          (event.motion.x > ((vid.width/2)+(vid.width/4))) ||
                          (event.motion.y < ((vid.height/2)-(vid.height/4))) ||
                          (event.motion.y > ((vid.height/2)+(vid.height/4))) ) {
                         SDL_WarpMouse(vid.width/2, vid.height/2);
-                    }
+                    }*/
                 }
                 break;
 
