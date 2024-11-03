@@ -140,35 +140,51 @@ void    VID_Init (unsigned char *palette)
     }
 
     // Set video width, height and flags
-    flags = (SDL_WINDOW_FULLSCREEN);
+    // CyanBun96: copying mindlessly from ChocolateDoom. expect bugs.
+    
+    // In windowed mode, the window can be resized while the game is
+    // running.
+    flags = SDL_WINDOW_RESIZABLE;
+
+    // Set the highdpi flag - this makes a big difference on Macs with
+    // retina displays, especially when using small window sizes.
+    flags |= SDL_WINDOW_ALLOW_HIGHDPI;
+
+    // CyanBun96: Chocolate Doom differentiates between FULLSCREEN and 
+    // FULLSCREEN_DESKTOP. Not touching that yet, doesn't make a difference
+    // on my setup.
 
     if ( COM_CheckParm ("-fullscreen") )
-        flags |= SDL_WINDOW_FULLSCREEN;
+        flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
 
     if ( COM_CheckParm ("-window") )
-        flags &= ~SDL_WINDOW_FULLSCREEN;
+        flags &= ~SDL_WINDOW_FULLSCREEN_DESKTOP;
     
+    // Running without window decorations is potentially useful if you're
+    // playing in three window mode and want to line up three game windows
+    // next to each other on a single desktop.
+    // Deliberately not documented because I'm not sure how useful this is yet.
+    if ( COM_CheckParm ("-borderless") )
+        flags |= SDL_WINDOW_BORDERLESS;
+
     if (vid.width > 1280 || vid.height > 1024)
     {
     	Sys_Error("Maximum Resolution is 1280 width and 1024 height");
     }
     int scale = 4;
-    window = SDL_CreateWindow("SDLWinQuake",
+    window = SDL_CreateWindow(NULL,
                                           SDL_WINDOWPOS_CENTERED,
                                           SDL_WINDOWPOS_CENTERED,
-                                          1920, 1080,
+                                          vid.width, vid.height,
                                           flags);
     screen = SDL_CreateRGBSurfaceWithFormat(0, vid.width, vid.height, 8, SDL_PIXELFORMAT_INDEX8);
     scaleBuffer = SDL_CreateRGBSurfaceWithFormat(0, vid.width, vid.height, 8, SDL_GetWindowPixelFormat(window));
     windowSurface = SDL_GetWindowSurface(window);
-    SDL_SetSurfaceBlendMode(screen, SDL_BLENDMODE_NONE);
-    SDL_SetSurfaceBlendMode(scaleBuffer, SDL_BLENDMODE_NONE);
-    SDL_SetSurfaceBlendMode(windowSurface, SDL_BLENDMODE_NONE);
 
     if (!screen)
         Sys_Error("VID: Couldn't set video mode: %s\n", SDL_GetError());
     SDL_UpdateWindowSurface(window);
-        
+
     sprintf(caption, "SDLWinQuake - Version %4.2f", VERSION);
     SDL_SetWindowTitle(window, (const char*)&caption);
     
@@ -221,6 +237,7 @@ void    VID_Shutdown (void)
 
 void    VID_Update (vrect_t *rects)
 {
+    /*
     SDL_Rect *sdlrects;
     int n, i;
     vrect_t *rect;
@@ -244,10 +261,50 @@ void    VID_Update (vrect_t *rects)
         sdlrects[i].h = rect->height;
         ++i;
     }
-    SDL_Rect srcRect = {0, 0, screen->w, screen->h}; // Source rectangle
-    SDL_Rect destRect = {0, 0, screen->w*SCALE, screen->h*SCALE};
+    */
+    // CyanBun96: the above part scares me, so I'm doing it the simple way
+    // TODO overcome the fear and make this as efficient as it was
+
+    // Blit the original framebuffer "screen" onto an intermediate buffer
+    // Has to be done this way because scaled blit needs the same format
     SDL_UpperBlit(screen, NULL, scaleBuffer, NULL);
-    SDL_UpperBlitScaled(scaleBuffer, NULL, windowSurface, NULL);
+
+    // Scaling code, courtesy of ChatGPT
+    // Get window dimensions
+    int winW = windowSurface->w;
+    int winH = windowSurface->h;
+    
+    // Get scaleBuffer dimensions (assuming 4:3 aspect ratio)
+    int bufW = scaleBuffer->w;
+    int bufH = scaleBuffer->h;
+    float bufAspect = (float)bufW / bufH;
+    
+    // Calculate scaled dimensions
+    int destW, destH;
+    if ((float)winW / winH > bufAspect) {
+        // Window is wider than buffer, black bars on sides
+        destH = winH;
+        destW = (int)(winH * bufAspect);
+    } else {
+        // Window is taller than buffer, black bars on top/bottom
+        destW = winW;
+        destH = (int)(winW / bufAspect);
+    }
+    
+    // Center the destination rectangle
+    SDL_Rect destRect = {
+        (winW - destW) / 2,  // X position
+        (winH - destH) / 2,  // Y position
+        destW,
+        destH
+    };
+    
+    // Fill window surface with black
+    SDL_FillRect(windowSurface, NULL, SDL_MapRGB(windowSurface->format, 0, 0, 0));
+    
+    // Blit the scaled image onto the centered destination rectangle
+    SDL_UpperBlitScaled(scaleBuffer, NULL, windowSurface, &destRect);
+
     SDL_UpdateWindowSurface(window);
 }
 
@@ -301,7 +358,6 @@ void Sys_SendKeyEvents(void)
     while (SDL_PollEvent(&event))
     {
         switch (event.type) {
-
             case SDL_KEYDOWN:
             case SDL_KEYUP:
                 sym = event.key.keysym.sym;
@@ -406,9 +462,18 @@ void Sys_SendKeyEvents(void)
                          (event.motion.y > ((vid.height/2)+(vid.height/4))) ) {
                         SDL_WarpMouse(vid.width/2, vid.height/2);
                     }*/
+		    // CyanBun96: this does the same thing, right?
+                    SDL_SetRelativeMouseMode(SDL_TRUE);
                 }
                 break;
-
+	    case SDL_WINDOWEVENT:
+                switch (event.window.event) {
+                    case SDL_WINDOWEVENT_RESIZED:
+                    case SDL_WINDOWEVENT_SIZE_CHANGED:
+                        windowSurface = SDL_GetWindowSurface(window);
+                        break;
+                }
+                break;
             case SDL_QUIT:
                 CL_Disconnect ();
                 Host_ShutdownServer(false);        

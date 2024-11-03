@@ -6,11 +6,16 @@ CyanBun96: My fork aims to bring it closer to being "Chocolate Quake", with Linu
 Changes from upstream:
 
 -WIP SDL2 port
--Integer scaling
+
+  -Integer scaling
+
+  -Borderless window with -borderless parameter
 
 Planned:
 
 -Mouse sensitivity for widescreen resolutions
+
+-Higher resolutions
 
 Original readme below.
 
