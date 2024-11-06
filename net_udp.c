@@ -50,6 +50,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <arpa/inet.h>
 #endif /* __APPLE__ || MACOSX */
 
+extern unsigned long inet_addr(const char *cp);
 extern int close (int);
 
 extern cvar_t hostname;
