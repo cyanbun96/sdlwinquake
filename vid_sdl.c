@@ -150,26 +150,26 @@ void    VID_Init (unsigned char *palette)
     // retina displays, especially when using small window sizes.
     flags |= SDL_WINDOW_ALLOW_HIGHDPI;
 
-    // CyanBun96: Chocolate Doom differentiates between FULLSCREEN and 
-    // FULLSCREEN_DESKTOP. Not touching that yet, doesn't make a difference
-    // on my setup.
+    // CyanBun96: what most modern games call "Fullscreen borderless
+    // can be achieved by passing -fullscreen_desktop and -borderless
+    // -fullscreen will try to change the display resolution
 
     if ( COM_CheckParm ("-fullscreen") )
+        flags |= SDL_WINDOW_FULLSCREEN;
+
+    else if ( COM_CheckParm ("-fullscreen_desktop") )
         flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
 
     if ( COM_CheckParm ("-window") )
-        flags &= ~SDL_WINDOW_FULLSCREEN_DESKTOP;
+        flags &= ~SDL_WINDOW_FULLSCREEN;
     
-    // Running without window decorations is potentially useful if you're
-    // playing in three window mode and want to line up three game windows
-    // next to each other on a single desktop.
-    // Deliberately not documented because I'm not sure how useful this is yet.
     if ( COM_CheckParm ("-borderless") )
         flags |= SDL_WINDOW_BORDERLESS;
 
     if (vid.width > 1280 || vid.height > 1024)
     {
-    	Sys_Error("Maximum Resolution is 1280 width and 1024 height");
+        Con_Printf("WARNING: vanilla maximum resolution is 1280x1024\n");
+    	//Sys_Error("Maximum Resolution is 1280 width and 1024 height");
     }
     int scale = 4;
     window = SDL_CreateWindow(NULL,
@@ -185,7 +185,7 @@ void    VID_Init (unsigned char *palette)
         Sys_Error("VID: Couldn't set video mode: %s\n", SDL_GetError());
     SDL_UpdateWindowSurface(window);
 
-    sprintf(caption, "SDLWinQuake - Version %4.2f", VERSION);
+    sprintf(caption, "SDL2WinQuake - Version %4.2f", VERSION);
     SDL_SetWindowTitle(window, (const char*)&caption);
     
     // now know everything we need to know about the buffer

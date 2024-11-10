@@ -4,7 +4,7 @@ SDLWinQuake
 CyanBun96: My fork aims to bring it closer to being "Chocolate Quake", with Linux being the primary targeted OS.
 
 Requires SDL2.
-Build on Linux with ./autogen && ./configure && make
+Build on Linux with ./autogen.sh && ./configure && make
 Other OSs not tested yet.
 
 Changes from upstream:
@@ -17,11 +17,16 @@ Changes from upstream:
 
 ---Borderless window with -borderless parameter
 
+---Auto-resolution fullscreen with -fullscreen_desktop
+
+---Higher resolutions (max is 1920x1080 ATM)
+
 Planned:
 
 -Mouse sensitivity for widescreen resolutions
 
--Higher resolutions
+-Proper higher resolution support
+
 
 Original readme below.
 ------------
