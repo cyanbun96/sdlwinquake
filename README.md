@@ -21,11 +21,13 @@ Changes from upstream:
 
 ---Higher resolutions (max is 1920x1080 ATM)
 
+---Hardware-accelerated frame > screen rendering, if supported
+
 Planned:
 
--Mouse sensitivity for widescreen resolutions
+---Mouse sensitivity for widescreen resolutions
 
--Proper higher resolution support
+---Proper higher resolution support
 
 
 Original readme below.

@@ -5,8 +5,11 @@
 #include "d_local.h"
 
 SDL_Surface *windowSurface;
-SDL_Surface *scaleBuffer;
 SDL_Window *window;
+SDL_Renderer *renderer;
+SDL_Surface *argbbuffer;
+SDL_Texture *texture;
+
 viddef_t    vid;                // global video state
 unsigned short  d_8to16table[256];
 
@@ -171,14 +174,20 @@ void    VID_Init (unsigned char *palette)
         Con_Printf("WARNING: vanilla maximum resolution is 1280x1024\n");
     	//Sys_Error("Maximum Resolution is 1280 width and 1024 height");
     }
-    int scale = 4;
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "nearest");
     window = SDL_CreateWindow(NULL,
                                           SDL_WINDOWPOS_CENTERED,
                                           SDL_WINDOWPOS_CENTERED,
                                           vid.width, vid.height,
                                           flags);
+    renderer = SDL_CreateRenderer(window, -1, 0);
     screen = SDL_CreateRGBSurfaceWithFormat(0, vid.width, vid.height, 8, SDL_PIXELFORMAT_INDEX8);
-    scaleBuffer = SDL_CreateRGBSurfaceWithFormat(0, vid.width, vid.height, 8, SDL_GetWindowPixelFormat(window));
+    argbbuffer = SDL_CreateRGBSurfaceWithFormatFrom(
+        NULL, vid.width, vid.height, 0, 0, SDL_PIXELFORMAT_ARGB8888);
+    texture = SDL_CreateTexture(renderer,
+                                SDL_PIXELFORMAT_ARGB8888,
+                                SDL_TEXTUREACCESS_STREAMING,
+                                vid.width, vid.height);
     windowSurface = SDL_GetWindowSurface(window);
 
     if (!screen)
@@ -190,8 +199,6 @@ void    VID_Init (unsigned char *palette)
     
     // now know everything we need to know about the buffer
     VID_SetPalette(palette);
-
-    // now know everything we need to know about the buffer
     VGA_width = vid.conwidth = vid.width;
     VGA_height = vid.conheight = vid.height;
     vid.aspect = ((float)vid.height / (float)vid.width) * (320.0 / 240.0);
@@ -262,21 +269,26 @@ void    VID_Update (vrect_t *rects)
         ++i;
     }
     */
-    // CyanBun96: the above part scares me, so I'm doing it the simple way
-    // TODO overcome the fear and make this as efficient as it was
-
-    // Blit the original framebuffer "screen" onto an intermediate buffer
-    // Has to be done this way because scaled blit needs the same format
-    SDL_UpperBlit(screen, NULL, scaleBuffer, NULL);
+    // CyanBun96: the above part would update different areas of the screen
+    // seperately with SDL_UpdateRects, but SDL2 replaced it with the whole
+    // SDL_Renderer system. The following code just updates the entire screen
+    // every frame, which I guess could be a bit inefficient, but I haven't
+    // run into any issues even on my weakest machine
 
     // Scaling code, courtesy of ChatGPT
+    SDL_Rect blitRect = {
+        0,
+        0,
+        vid.width,
+        vid.height
+    };
     // Get window dimensions
     int winW = windowSurface->w;
     int winH = windowSurface->h;
     
-    // Get scaleBuffer dimensions (assuming 4:3 aspect ratio)
-    int bufW = scaleBuffer->w;
-    int bufH = scaleBuffer->h;
+    // Get scaleBuffer dimensions
+    int bufW = vid.width;
+    int bufH = vid.height;
     float bufAspect = (float)bufW / bufH;
     
     // Calculate scaled dimensions
@@ -299,13 +311,16 @@ void    VID_Update (vrect_t *rects)
         destH
     };
     
-    // Fill window surface with black
-    SDL_FillRect(windowSurface, NULL, SDL_MapRGB(windowSurface->format, 0, 0, 0));
-    
+    SDL_LockTexture(texture, &blitRect, &argbbuffer->pixels,
+        &argbbuffer->pitch);
+    SDL_LowerBlit(screen, &blitRect, argbbuffer, &blitRect);
+    SDL_UnlockTexture(texture);
+    SDL_RenderClear(renderer);
+    SDL_RenderCopy(renderer, texture, NULL, &destRect);
+    SDL_RenderPresent(renderer);
     // Blit the scaled image onto the centered destination rectangle
-    SDL_UpperBlitScaled(scaleBuffer, NULL, windowSurface, &destRect);
 
-    SDL_UpdateWindowSurface(window);
+    //SDL_UpdateWindowSurface(window);
 }
 
 /*
@@ -337,9 +352,11 @@ D_EndDirectRect
 */
 void D_EndDirectRect (int x, int y, int width, int height)
 {
-    if (!screen) return;
-    if (x < 0) x = screen->w+x-1;
-    //TODO SDL SDL_UpdateRect(screen, x, y, width, height);
+    return;
+    // Unneeded with SDL2
+    // if (!screen) return;
+    // if (x < 0) x = screen->w+x-1;
+    // SDL_UpdateRect(screen, x, y, width, height);
 }
 
 
@@ -354,7 +371,6 @@ void Sys_SendKeyEvents(void)
     SDL_Event event;
     int sym, state;
     int modstate;
-    //TODO SDL 
     while (SDL_PollEvent(&event))
     {
         switch (event.type) {
@@ -455,7 +471,6 @@ void Sys_SendKeyEvents(void)
                      (event.motion.y != (vid.height/2)) ) {
                     mouse_x = event.motion.xrel*10;
                     mouse_y = event.motion.yrel*10;
-		    //TODO SDL
                     /*if ( (event.motion.x < ((vid.width/2)-(vid.width/4))) ||
                          (event.motion.x > ((vid.width/2)+(vid.width/4))) ||
                          (event.motion.y < ((vid.height/2)-(vid.height/4))) ||
@@ -463,6 +478,7 @@ void Sys_SendKeyEvents(void)
                         SDL_WarpMouse(vid.width/2, vid.height/2);
                     }*/
 		    // CyanBun96: this does the same thing, right?
+		    // TODO: implement something less aggressive
                     SDL_SetRelativeMouseMode(SDL_TRUE);
                 }
                 break;
