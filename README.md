@@ -23,11 +23,15 @@ Changes from upstream:
 
 ---Hardware-accelerated frame > screen rendering, if supported
 
+-Changed audio rate to 11025 for more muffled WinQuake sound
+
 Planned:
 
----Mouse sensitivity for widescreen resolutions
+-Mouse sensitivity for widescreen resolutions
 
----Proper higher resolution support
+-Proper higher resolution support
+
+-Audio rate configuration
 
 
 Original readme below.
