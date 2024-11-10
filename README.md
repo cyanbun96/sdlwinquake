@@ -7,6 +7,8 @@ Changes from upstream:
 
 -WIP SDL2 port
 
+  -No SDL1.2 includes
+
   -Integer scaling
 
   -Borderless window with -borderless parameter
