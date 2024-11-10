@@ -3,15 +3,19 @@ SDLWinQuake
 
 CyanBun96: My fork aims to bring it closer to being "Chocolate Quake", with Linux being the primary targeted OS.
 
+Requires SDL2.
+Build on Linux with ./autogen && ./configure && make
+Other OSs not tested yet.
+
 Changes from upstream:
 
 -WIP SDL2 port
 
-  -No SDL1.2 includes
+---No SDL1.2 includes
 
-  -Integer scaling
+---Integer scaling
 
-  -Borderless window with -borderless parameter
+---Borderless window with -borderless parameter
 
 Planned:
 
@@ -20,6 +24,7 @@ Planned:
 -Higher resolutions
 
 Original readme below.
+------------
 
 This is SDLWinQuake, a port of id Software's Quake engine to the Simple Direct-media Layer 1.2.  The Autotools build system has been updated to 2023 standards more or less.  There is also a build.sh file (for macOS) and a Windows VS2022 project file with dependencies included.
 
