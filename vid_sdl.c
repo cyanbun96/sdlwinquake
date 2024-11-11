@@ -9,11 +9,12 @@ SDL_Window *window;
 SDL_Renderer *renderer;
 SDL_Surface *argbbuffer;
 SDL_Texture *texture;
+SDL_Rect blitRect;
+SDL_Rect destRect;
 
 viddef_t    vid;                // global video state
 unsigned short  d_8to16table[256];
 
-#define SCALE               4
 #define BASEWIDTH           320
 #define BASEHEIGHT          240
 
@@ -29,6 +30,7 @@ static qboolean mouse_avail;
 static float   mouse_x, mouse_y;
 static int mouse_oldbuttonstate = 0;
 
+void VID_CalcScreenDimensions();
 // No support for option menus
 void (*vid_menudrawfn)(void) = NULL;
 void (*vid_menukeyfn)(int key) = NULL;
@@ -192,6 +194,7 @@ void    VID_Init (unsigned char *palette)
 
     if (!screen)
         Sys_Error("VID: Couldn't set video mode: %s\n", SDL_GetError());
+    VID_CalcScreenDimensions();
     SDL_UpdateWindowSurface(window);
 
     sprintf(caption, "SDL2WinQuake - Version %4.2f", VERSION);
@@ -232,7 +235,7 @@ void    VID_Init (unsigned char *palette)
 
 void    VID_Shutdown (void)
 {
-	if (vid_initialized)
+	if (vid_initialized) //TODO clean up the other stuff too
 	{
 		if (screen != NULL && lockcount > 0)
 			SDL_UnlockSurface (screen);
@@ -240,6 +243,43 @@ void    VID_Shutdown (void)
 		vid_initialized = 0;
 		SDL_QuitSubSystem(SDL_INIT_VIDEO);
 	}
+}
+
+void    VID_CalcScreenDimensions ()
+{
+    // Scaling code, courtesy of ChatGPT
+    // Original, pre-scale screen size
+    blitRect.x = 0;
+    blitRect.y = 0;
+    blitRect.w = vid.width;
+    blitRect.h = vid.height;
+        
+    // Get window dimensions
+    int winW = windowSurface->w;
+    int winH = windowSurface->h;
+    
+    // Get scaleBuffer dimensions
+    int bufW = vid.width;
+    int bufH = vid.height;
+    float bufAspect = (float)bufW / bufH;
+    
+    // Calculate scaled dimensions
+    int destW, destH;
+    if ((float)winW / winH > bufAspect) {
+        // Window is wider than buffer, black bars on sides
+        destH = winH;
+        destW = (int)(winH * bufAspect);
+    } else {
+        // Window is taller than buffer, black bars on top/bottom
+        destW = winW;
+        destH = (int)(winW / bufAspect);
+    }
+    
+    // Center the destination rectangle
+    destRect.x = (winW - destW) / 2;
+    destRect.y = (winH - destH) / 2;
+    destRect.w = destW;
+    destRect.h = destH;
 }
 
 void    VID_Update (vrect_t *rects)
@@ -275,42 +315,6 @@ void    VID_Update (vrect_t *rects)
     // every frame, which I guess could be a bit inefficient, but I haven't
     // run into any issues even on my weakest machine
 
-    // Scaling code, courtesy of ChatGPT
-    SDL_Rect blitRect = {
-        0,
-        0,
-        vid.width,
-        vid.height
-    };
-    // Get window dimensions
-    int winW = windowSurface->w;
-    int winH = windowSurface->h;
-    
-    // Get scaleBuffer dimensions
-    int bufW = vid.width;
-    int bufH = vid.height;
-    float bufAspect = (float)bufW / bufH;
-    
-    // Calculate scaled dimensions
-    int destW, destH;
-    if ((float)winW / winH > bufAspect) {
-        // Window is wider than buffer, black bars on sides
-        destH = winH;
-        destW = (int)(winH * bufAspect);
-    } else {
-        // Window is taller than buffer, black bars on top/bottom
-        destW = winW;
-        destH = (int)(winW / bufAspect);
-    }
-    
-    // Center the destination rectangle
-    SDL_Rect destRect = {
-        (winW - destW) / 2,  // X position
-        (winH - destH) / 2,  // Y position
-        destW,
-        destH
-    };
-    
     SDL_LockTexture(texture, &blitRect, &argbbuffer->pixels,
         &argbbuffer->pitch);
     SDL_LowerBlit(screen, &blitRect, argbbuffer, &blitRect);
@@ -318,9 +322,6 @@ void    VID_Update (vrect_t *rects)
     SDL_RenderClear(renderer);
     SDL_RenderCopy(renderer, texture, NULL, &destRect);
     SDL_RenderPresent(renderer);
-    // Blit the scaled image onto the centered destination rectangle
-
-    //SDL_UpdateWindowSurface(window);
 }
 
 /*
@@ -487,6 +488,7 @@ void Sys_SendKeyEvents(void)
                     case SDL_WINDOWEVENT_RESIZED:
                     case SDL_WINDOWEVENT_SIZE_CHANGED:
                         windowSurface = SDL_GetWindowSurface(window);
+                        VID_CalcScreenDimensions();
                         break;
                 }
                 break;

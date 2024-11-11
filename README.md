@@ -33,6 +33,12 @@ Planned:
 
 -Audio rate configuration
 
+-General feature parity with the original WinQuake
+
+---Video configuration menu
+
+---"Use Mouse" option in windowed mode
+
 
 Original readme below.
 ------------
