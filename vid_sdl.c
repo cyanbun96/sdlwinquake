@@ -506,6 +506,7 @@ void Sys_SendKeyEvents(void)
 		// frame, gaining about 1-2% performance on an ancient
 		// Acer Aspire One without graphics drivers for Linux.
 		// probably other systems too i guess. not that it matters.
+                SDL_FillRect(argbbuffer, NULL, SDL_MapRGB(argbbuffer->format, 0, 0, 0));
                 SDL_RenderClear(renderer);
                 break;
             case SDL_QUIT:
