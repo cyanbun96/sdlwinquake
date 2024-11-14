@@ -5,6 +5,7 @@
 #include "d_local.h"
 
 SDL_Surface *windowSurface;
+SDL_Surface *scaleBuffer;
 SDL_Window *window;
 SDL_Renderer *renderer;
 SDL_Surface *argbbuffer;
@@ -184,8 +185,11 @@ void    VID_Init (unsigned char *palette)
                                           flags);
     renderer = SDL_CreateRenderer(window, -1, 0);
     screen = SDL_CreateRGBSurfaceWithFormat(0, vid.width, vid.height, 8, SDL_PIXELFORMAT_INDEX8);
+    //TODO render type switching
     argbbuffer = SDL_CreateRGBSurfaceWithFormatFrom(
         NULL, vid.width, vid.height, 0, 0, SDL_PIXELFORMAT_ARGB8888);
+    scaleBuffer = SDL_CreateRGBSurfaceWithFormat(
+        0, vid.width, vid.height, 8, SDL_GetWindowPixelFormat(window));
     texture = SDL_CreateTexture(renderer,
                                 SDL_PIXELFORMAT_ARGB8888,
                                 SDL_TEXTUREACCESS_STREAMING,
@@ -315,23 +319,24 @@ void    VID_Update (vrect_t *rects)
     // every frame, which I guess could be a bit inefficient, but I haven't
     // run into any issues even on my weakest machine
 
-    // tests: all on 		41.5 fps
-    //        no RenderClear 	42.5 fps - done!
-    //        no RenderPresent	140 fps
-    //        no RenderCopy	120 fps
-    //        no present and copy 236 fps
-    //        no rendering at all 292 fps
-    // test setup start->new game->disconnect(console)->timedemo demo1(console)
-    // tested on an Acer Aspire One without graphics drivers for linux
-    // WM: Sway   Distro: Arch
-    // this machine only uses the CPU for rendering, the orthodox software rig
-    // TODO find a way to optimise that, at least up to 60 fps
-    SDL_LockTexture(texture, &blitRect, &argbbuffer->pixels,
-        &argbbuffer->pitch);
-    SDL_LowerBlit(screen, &blitRect, argbbuffer, &blitRect);
-    SDL_UnlockTexture(texture);
-    SDL_RenderCopy(renderer, texture, NULL, &destRect);
-    SDL_RenderPresent(renderer);
+    // Machines without a proper GPU will try to simulate one with software,
+    // adding a lot of overhead. In my tests, software rendering accomplished
+    // the same result with almost a 200% performance increase.
+
+    // TODO render type switching
+    if (0){ // hardware-accelerated rendering
+        SDL_LockTexture(texture, &blitRect, &argbbuffer->pixels,
+            &argbbuffer->pitch);
+        SDL_LowerBlit(screen, &blitRect, argbbuffer, &blitRect);
+        SDL_UnlockTexture(texture);
+        SDL_RenderCopy(renderer, texture, NULL, &destRect);
+        SDL_RenderPresent(renderer);
+    }
+    else { // pure software rendering
+        SDL_UpperBlit(screen, NULL, scaleBuffer, NULL);
+        SDL_UpperBlitScaled(scaleBuffer, &blitRect, windowSurface, &destRect);
+        SDL_UpdateWindowSurface(window);
+    }
 }
 
 /*
@@ -506,6 +511,7 @@ void Sys_SendKeyEvents(void)
 		// frame, gaining about 1-2% performance on an ancient
 		// Acer Aspire One without graphics drivers for Linux.
 		// probably other systems too i guess. not that it matters.
+                // TODO render type switching
                 SDL_FillRect(argbbuffer, NULL, SDL_MapRGB(argbbuffer->format, 0, 0, 0));
                 SDL_RenderClear(renderer);
                 break;
