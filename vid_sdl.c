@@ -5,13 +5,16 @@
 #include "d_local.h"
 
 SDL_Surface *windowSurface;
-SDL_Surface *scaleBuffer;
 SDL_Window *window;
 SDL_Renderer *renderer;
 SDL_Surface *argbbuffer;
 SDL_Texture *texture;
 SDL_Rect blitRect;
 SDL_Rect destRect;
+
+// old-style rendering process, enabled with -forceoldrender
+SDL_Surface *scaleBuffer;
+int force_old_render;
 
 viddef_t    vid;                // global video state
 unsigned short  d_8to16table[256];
@@ -172,28 +175,36 @@ void    VID_Init (unsigned char *palette)
     if ( COM_CheckParm ("-borderless") )
         flags |= SDL_WINDOW_BORDERLESS;
 
+    if ( COM_CheckParm ("-forceoldrender") )
+        force_old_render = 1;
+    else
+        force_old_render = 0;
+
     if (vid.width > 1280 || vid.height > 1024)
     {
         Con_Printf("WARNING: vanilla maximum resolution is 1280x1024\n");
     	//Sys_Error("Maximum Resolution is 1280 width and 1024 height");
     }
-    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "nearest");
     window = SDL_CreateWindow(NULL,
                                           SDL_WINDOWPOS_CENTERED,
                                           SDL_WINDOWPOS_CENTERED,
                                           vid.width, vid.height,
                                           flags);
-    renderer = SDL_CreateRenderer(window, -1, 0);
     screen = SDL_CreateRGBSurfaceWithFormat(0, vid.width, vid.height, 8, SDL_PIXELFORMAT_INDEX8);
-    //TODO render type switching
-    argbbuffer = SDL_CreateRGBSurfaceWithFormatFrom(
-        NULL, vid.width, vid.height, 0, 0, SDL_PIXELFORMAT_ARGB8888);
-    scaleBuffer = SDL_CreateRGBSurfaceWithFormat(
-        0, vid.width, vid.height, 8, SDL_GetWindowPixelFormat(window));
-    texture = SDL_CreateTexture(renderer,
-                                SDL_PIXELFORMAT_ARGB8888,
-                                SDL_TEXTUREACCESS_STREAMING,
-                                vid.width, vid.height);
+    if (!force_old_render) {
+        SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "nearest");
+        renderer = SDL_CreateRenderer(window, -1, 0);
+        argbbuffer = SDL_CreateRGBSurfaceWithFormatFrom(
+            NULL, vid.width, vid.height, 0, 0, SDL_PIXELFORMAT_ARGB8888);
+        texture = SDL_CreateTexture(renderer,
+                                    SDL_PIXELFORMAT_ARGB8888,
+                                    SDL_TEXTUREACCESS_STREAMING,
+                                    vid.width, vid.height);
+    }
+    else {
+        scaleBuffer = SDL_CreateRGBSurfaceWithFormat(
+            0, vid.width, vid.height, 8, SDL_GetWindowPixelFormat(window));
+    }
     windowSurface = SDL_GetWindowSurface(window);
 
     if (!screen)
@@ -323,8 +334,7 @@ void    VID_Update (vrect_t *rects)
     // adding a lot of overhead. In my tests, software rendering accomplished
     // the same result with almost a 200% performance increase.
 
-    // TODO render type switching
-    if (0){ // hardware-accelerated rendering
+    if (!force_old_render){ // hardware-accelerated rendering
         SDL_LockTexture(texture, &blitRect, &argbbuffer->pixels,
             &argbbuffer->pitch);
         SDL_LowerBlit(screen, &blitRect, argbbuffer, &blitRect);
@@ -504,16 +514,15 @@ void Sys_SendKeyEvents(void)
                     case SDL_WINDOWEVENT_SIZE_CHANGED:
                         windowSurface = SDL_GetWindowSurface(window);
                         VID_CalcScreenDimensions();
+                        if (force_old_render) break;
+                        // CyanBun96:
+                        // if we call renderclear here we can avoid calling it
+                        // every frame, gaining about 1-2% performance, maybe.
+                        SDL_FillRect(argbbuffer, NULL,
+                                SDL_MapRGB(argbbuffer->format, 0, 0, 0));
+                        SDL_RenderClear(renderer);
                         break;
                 }
-		// CyanBun96:
-		// if we call renderclear here we can avoid calling it every
-		// frame, gaining about 1-2% performance on an ancient
-		// Acer Aspire One without graphics drivers for Linux.
-		// probably other systems too i guess. not that it matters.
-                // TODO render type switching
-                SDL_FillRect(argbbuffer, NULL, SDL_MapRGB(argbbuffer->format, 0, 0, 0));
-                SDL_RenderClear(renderer);
                 break;
             case SDL_QUIT:
                 CL_Disconnect ();

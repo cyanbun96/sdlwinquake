@@ -21,7 +21,13 @@ Changes from upstream:
 
 ---Higher resolutions (max is 1920x1080 ATM)
 
----Hardware-accelerated frame > screen rendering, if supported
+---Hardware-accelerated frame > screen rendering
+
+------Boosts performance massively on systems with GPUs
+
+------Tanks performance on machines without GPUs
+
+------Use the new -forceoldrender flag to disable
 
 -Changed audio rate to 11025 for more muffled WinQuake sound
 
