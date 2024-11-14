@@ -191,9 +191,9 @@ void    VID_Init (unsigned char *palette)
                                           vid.width, vid.height,
                                           flags);
     screen = SDL_CreateRGBSurfaceWithFormat(0, vid.width, vid.height, 8, SDL_PIXELFORMAT_INDEX8);
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "nearest");
+    renderer = SDL_CreateRenderer(window, -1, 0);
     if (!force_old_render) {
-        SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "nearest");
-        renderer = SDL_CreateRenderer(window, -1, 0);
         argbbuffer = SDL_CreateRGBSurfaceWithFormatFrom(
             NULL, vid.width, vid.height, 0, 0, SDL_PIXELFORMAT_ARGB8888);
         texture = SDL_CreateTexture(renderer,
