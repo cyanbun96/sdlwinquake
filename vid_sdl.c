@@ -315,11 +315,21 @@ void    VID_Update (vrect_t *rects)
     // every frame, which I guess could be a bit inefficient, but I haven't
     // run into any issues even on my weakest machine
 
+    // tests: all on 		41.5 fps
+    //        no RenderClear 	42.5 fps - done!
+    //        no RenderPresent	140 fps
+    //        no RenderCopy	120 fps
+    //        no present and copy 236 fps
+    //        no rendering at all 292 fps
+    // test setup start->new game->disconnect(console)->timedemo demo1(console)
+    // tested on an Acer Aspire One without graphics drivers for linux
+    // WM: Sway   Distro: Arch
+    // this machine only uses the CPU for rendering, the orthodox software rig
+    // TODO find a way to optimise that, at least up to 60 fps
     SDL_LockTexture(texture, &blitRect, &argbbuffer->pixels,
         &argbbuffer->pitch);
     SDL_LowerBlit(screen, &blitRect, argbbuffer, &blitRect);
     SDL_UnlockTexture(texture);
-    SDL_RenderClear(renderer);
     SDL_RenderCopy(renderer, texture, NULL, &destRect);
     SDL_RenderPresent(renderer);
 }
@@ -491,6 +501,12 @@ void Sys_SendKeyEvents(void)
                         VID_CalcScreenDimensions();
                         break;
                 }
+		// CyanBun96:
+		// if we call renderclear here we can avoid calling it every
+		// frame, gaining about 1-2% performance on an ancient
+		// Acer Aspire One without graphics drivers for Linux.
+		// probably other systems too i guess. not that it matters.
+                SDL_RenderClear(renderer);
                 break;
             case SDL_QUIT:
                 CL_Disconnect ();
