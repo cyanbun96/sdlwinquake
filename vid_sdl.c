@@ -250,11 +250,14 @@ void    VID_Init (unsigned char *palette)
 
 void    VID_Shutdown (void)
 {
-	if (vid_initialized) //TODO clean up the other stuff too
+	if (vid_initialized)
 	{
 		if (screen != NULL && lockcount > 0)
 			SDL_UnlockSurface (screen);
 
+        if (!force_old_render) {
+            SDL_UnlockTexture(texture);
+        }
 		vid_initialized = 0;
 		SDL_QuitSubSystem(SDL_INIT_VIDEO);
 	}
@@ -334,10 +337,11 @@ void    VID_Update (vrect_t *rects)
     // adding a lot of overhead. In my tests, software rendering accomplished
     // the same result with almost a 200% performance increase.
 
-    if (!force_old_render){ // hardware-accelerated rendering
+    if (!force_old_render) { // hardware-accelerated rendering
         SDL_LockTexture(texture, &blitRect, &argbbuffer->pixels,
             &argbbuffer->pitch);
         SDL_LowerBlit(screen, &blitRect, argbbuffer, &blitRect);
+        SDL_RenderClear(renderer);
         SDL_UnlockTexture(texture);
         SDL_RenderCopy(renderer, texture, NULL, &destRect);
         SDL_RenderPresent(renderer);
@@ -392,6 +396,7 @@ Sys_SendKeyEvents
 ================
 */
 
+// TODO: what the beep is input doing in the fucking video source anyway?
 void Sys_SendKeyEvents(void)
 {
     SDL_Event event;
@@ -492,6 +497,10 @@ void Sys_SendKeyEvents(void)
                 Key_Event(sym, state);
                 break;
 
+            // WinQuake behavior: Use Mouse OFF disables mouse input entirely
+            // ON grabs the mouse, kinda like SetRelativeMouseMode(SDL_TRUE)
+            // Fullscreen grabs the mouse unconditionally
+
             case SDL_MOUSEMOTION:
                 if ( (event.motion.x != (vid.width/2)) ||
                      (event.motion.y != (vid.height/2)) ) {
@@ -503,8 +512,6 @@ void Sys_SendKeyEvents(void)
                          (event.motion.y > ((vid.height/2)+(vid.height/4))) ) {
                         SDL_WarpMouse(vid.width/2, vid.height/2);
                     }*/
-		    // CyanBun96: this does the same thing, right?
-		    // TODO: implement something less aggressive
                     SDL_SetRelativeMouseMode(SDL_TRUE);
                 }
                 break;
@@ -514,13 +521,6 @@ void Sys_SendKeyEvents(void)
                     case SDL_WINDOWEVENT_SIZE_CHANGED:
                         windowSurface = SDL_GetWindowSurface(window);
                         VID_CalcScreenDimensions();
-                        if (force_old_render) break;
-                        // CyanBun96:
-                        // if we call renderclear here we can avoid calling it
-                        // every frame, gaining about 1-2% performance, maybe.
-                        SDL_FillRect(argbbuffer, NULL,
-                                SDL_MapRGB(argbbuffer->format, 0, 0, 0));
-                        SDL_RenderClear(renderer);
                         break;
                 }
                 break;
