@@ -42,6 +42,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <stdlib.h>
 #include <stdint.h>
 #include <setjmp.h>
+#include <SDL2/SDL.h>
 
 #if id386
 #define UNALIGNED_OK	1	// set to 0 if unaligned accesses are not supported

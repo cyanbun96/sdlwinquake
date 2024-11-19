@@ -4,8 +4,9 @@
 #include "quakedef.h"
 #include "d_local.h"
 
-SDL_Surface *windowSurface;
+// CyanBun96: Made window global for checks in options
 SDL_Window *window;
+SDL_Surface *windowSurface;
 SDL_Renderer *renderer;
 SDL_Surface *argbbuffer;
 SDL_Texture *texture;

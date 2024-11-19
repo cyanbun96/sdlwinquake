@@ -18,6 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 #include "quakedef.h"
+#include <SDL2/SDL.h>
 
 #ifdef _WIN32
 #include "winquake.h"
@@ -1036,10 +1037,19 @@ again:
 //=============================================================================
 /* OPTIONS MENU */
 
+
+int is_fullscreen ()
+{
+    // CyanBun96: TODO optimise this function away
+    Uint32 flags = SDL_GetWindowFlags(window);
+    return (flags &
+            (SDL_WINDOW_FULLSCREEN | SDL_WINDOW_FULLSCREEN_DESKTOP)) != 0;
+}
+
 #ifdef _WIN32
 #define	OPTIONS_ITEMS	14
 #else
-#define	OPTIONS_ITEMS	13
+#define	OPTIONS_ITEMS	14 // added Use Mouse on non-windows OSs
 #endif
 
 #define	SLIDER_RANGE	10
@@ -1051,6 +1061,11 @@ void M_Menu_Options_f (void)
 	key_dest = key_menu;
 	m_state = m_options;
 	m_entersound = true;
+
+    if (options_cursor == 13 && is_fullscreen()) // fullscreen, disable Use Mouse
+    {
+        options_cursor = 0;
+    }
 }
 
 
@@ -1129,6 +1144,10 @@ void M_AdjustSliders (int dir)
 	case 11:	// lookstrafe
 		Cvar_SetValue ("lookstrafe", !lookstrafe.value);
 		break;
+
+    case 13:    // _windowed_mouse
+        //Cvar_SetValue ("_windowed_mouse", !_windowed_mouse.value); //TODO
+        break;
 	}
 }
 
@@ -1207,8 +1226,14 @@ void M_Options_Draw (void)
 	M_Print (16, 120, "            Lookstrafe");
 	M_DrawCheckbox (220, 120, lookstrafe.value);
 
-	if (vid_menudrawfn)
-		M_Print (16, 128, "         Video Options");
+	M_Print (16, 128, "         Video Options"); // TODO
+
+    if (!is_fullscreen())
+    {
+        M_Print (16, 136, "             Use Mouse");
+        //M_DrawCheckbox (220, 136, _windowed_mouse.value);
+        M_DrawCheckbox (220, 136, 1);
+    }
 
 // cursor
 	M_DrawCharacter (200, 32 + options_cursor*8, 12+((int)(realtime*4)&1));
@@ -1269,13 +1294,22 @@ void M_Options_Key (int k)
 		break;
 	}
 
-	if (options_cursor == 12 && vid_menudrawfn == NULL)
-	{
-		if (k == K_UPARROW)
-			options_cursor = 11;
-		else
-			options_cursor = 0;
-	}
+    // TODO: remove this properly
+    /*if (options_cursor == 12 && vid_menudrawfn == NULL)
+    {
+        if (k == K_UPARROW)
+            options_cursor = 11;
+        else
+            options_cursor = 0;
+    }*/
+
+    if (options_cursor == 13 && is_fullscreen())
+    {
+        if (k == K_UPARROW)
+            options_cursor = 12;
+        else
+            options_cursor = 0;
+    }
 }
 
 //=============================================================================
