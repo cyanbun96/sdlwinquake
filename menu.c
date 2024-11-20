@@ -1040,14 +1040,6 @@ again:
 /* OPTIONS MENU */
 
 
-int is_fullscreen ()
-{
-    // CyanBun96: TODO optimise this function away
-    Uint32 flags = SDL_GetWindowFlags(window);
-    return (flags &
-            (SDL_WINDOW_FULLSCREEN | SDL_WINDOW_FULLSCREEN_DESKTOP)) != 0;
-}
-
 #ifdef _WIN32
 #define	OPTIONS_ITEMS	14
 #else
@@ -1064,8 +1056,10 @@ void M_Menu_Options_f (void)
 	m_state = m_options;
 	m_entersound = true;
 
-    if (options_cursor == 13 && is_fullscreen()) // fullscreen, disable Use Mouse
-    {
+    if (options_cursor == 13 &&
+            (SDLWindowFlags & (SDL_WINDOW_FULLSCREEN
+            | SDL_WINDOW_FULLSCREEN_DESKTOP))
+            && !_windowed_mouse.value) {
         options_cursor = 0;
     }
 }
@@ -1230,7 +1224,8 @@ void M_Options_Draw (void)
 
 	M_Print (16, 128, "         Video Options"); // TODO
 
-    if (!is_fullscreen())
+    if (!(SDLWindowFlags & (SDL_WINDOW_FULLSCREEN
+            | SDL_WINDOW_FULLSCREEN_DESKTOP)))
     {
         M_Print (16, 136, "             Use Mouse");
         M_DrawCheckbox (220, 136, _windowed_mouse.value);
@@ -1295,16 +1290,17 @@ void M_Options_Key (int k)
 		break;
 	}
 
-    // TODO: remove this properly
-    /*if (options_cursor == 12 && vid_menudrawfn == NULL)
+    if (options_cursor == 12 && vid_menudrawfn == NULL)
     {
         if (k == K_UPARROW)
             options_cursor = 11;
         else
             options_cursor = 0;
-    }*/
+    }
 
-    if (options_cursor == 13 && is_fullscreen())
+    if (options_cursor == 13 &&
+            (SDLWindowFlags & (SDL_WINDOW_FULLSCREEN
+            | SDL_WINDOW_FULLSCREEN_DESKTOP)))
     {
         if (k == K_UPARROW)
             options_cursor = 12;
