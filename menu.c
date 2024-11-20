@@ -20,6 +20,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include <SDL2/SDL.h>
 
+extern cvar_t _windowed_mouse;
+
 #ifdef _WIN32
 #include "winquake.h"
 #endif
@@ -1146,7 +1148,7 @@ void M_AdjustSliders (int dir)
 		break;
 
     case 13:    // _windowed_mouse
-        //Cvar_SetValue ("_windowed_mouse", !_windowed_mouse.value); //TODO
+        Cvar_SetValue ("_windowed_mouse", !_windowed_mouse.value);
         break;
 	}
 }
@@ -1231,8 +1233,7 @@ void M_Options_Draw (void)
     if (!is_fullscreen())
     {
         M_Print (16, 136, "             Use Mouse");
-        //M_DrawCheckbox (220, 136, _windowed_mouse.value);
-        M_DrawCheckbox (220, 136, 1);
+        M_DrawCheckbox (220, 136, _windowed_mouse.value);
     }
 
 // cursor

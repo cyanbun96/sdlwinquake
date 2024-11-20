@@ -17,6 +17,8 @@ SDL_Rect destRect;
 SDL_Surface *scaleBuffer;
 int force_old_render;
 
+cvar_t _windowed_mouse = {"_windowed_mouse","0", true};
+
 viddef_t    vid;                // global video state
 unsigned short  d_8to16table[256];
 
@@ -107,6 +109,8 @@ void VID_UnlockBuffer (void)
 
 void    VID_Init (unsigned char *palette)
 {
+    Cvar_RegisterVariable (&_windowed_mouse);
+
     int pnum, chunk;
     byte *cache;
     int cachesize;
@@ -513,7 +517,6 @@ void Sys_SendKeyEvents(void)
                          (event.motion.y > ((vid.height/2)+(vid.height/4))) ) {
                         SDL_WarpMouse(vid.width/2, vid.height/2);
                     }*/
-                    SDL_SetRelativeMouseMode(SDL_TRUE);
                 }
                 break;
 	    case SDL_WINDOWEVENT:
@@ -569,11 +572,20 @@ void IN_Commands (void)
     mouse_oldbuttonstate = mouse_buttonstate;
 }
 
+// CyanBun96: this shouldn't be here. please make this not shit.
+extern int is_fullscreen ();
+
 void IN_Move (usercmd_t *cmd)
 {
     if (!mouse_avail)
         return;
-   
+    if (!is_fullscreen() && !_windowed_mouse.value) {
+        SDL_SetRelativeMouseMode(SDL_FALSE);
+        return;
+    }
+    SDL_SetRelativeMouseMode(SDL_TRUE);
+
+    // TODO aspect ratio-based sensitivity
     mouse_x *= sensitivity.value;
     mouse_y *= sensitivity.value;
    

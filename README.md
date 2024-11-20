@@ -31,6 +31,10 @@ Changes from upstream:
 
 -Changed audio rate to 11025 for more muffled WinQuake sound
 
+-General feature parity with the original WinQuake
+
+---"Use Mouse" option in windowed mode (also _windowed_mouse cvar)
+
 Planned:
 
 -Mouse sensitivity for widescreen resolutions
@@ -42,8 +46,6 @@ Planned:
 -General feature parity with the original WinQuake
 
 ---Video configuration menu
-
----"Use Mouse" option in windowed mode
 
 
 Original readme below.
