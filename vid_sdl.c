@@ -46,6 +46,83 @@ void VID_MenuKey (int key);
 void (*vid_menudrawfn)(void) = VID_MenuDraw;
 void (*vid_menukeyfn)(int key) = VID_MenuKey;
 
+// CyanBun96: Video Options menu types and functions
+
+#define MAX_COLUMN_SIZE     5
+#define MODE_AREA_HEIGHT    (MAX_COLUMN_SIZE + 6)
+#define MAX_MODEDESCS       (MAX_COLUMN_SIZE*3)
+#define MAX_MODE_LIST   30
+#define VID_ROW_SIZE    3
+
+// Note that 0 is MODE_WINDOWED
+cvar_t      vid_mode = {"vid_mode","0", false};
+// Note that 0 is MODE_WINDOWED
+cvar_t      _vid_default_mode = {"_vid_default_mode","0", true};
+// Note that 3 is MODE_FULLSCREEN_DEFAULT
+cvar_t      _vid_default_mode_win = {"_vid_default_mode_win","3", true};
+cvar_t      vid_wait = {"vid_wait","0"};
+cvar_t      vid_nopageflip = {"vid_nopageflip","0", true};
+cvar_t      _vid_wait_override = {"_vid_wait_override", "0", true};
+cvar_t      vid_config_x = {"vid_config_x","800", true};
+cvar_t      vid_config_y = {"vid_config_y","600", true};
+cvar_t      vid_stretch_by_2 = {"vid_stretch_by_2","1", true};
+cvar_t      vid_fullscreen_mode = {"vid_fullscreen_mode","3", true};
+cvar_t      vid_windowed_mode = {"vid_windowed_mode","0", true};
+cvar_t      block_switch = {"block_switch","0", true};
+cvar_t      vid_window_x = {"vid_window_x", "0", true};
+cvar_t      vid_window_y = {"vid_window_y", "0", true};
+
+extern void M_Menu_Options_f (void);
+extern void M_Print (int cx, int cy, char *str);
+extern void M_PrintWhite (int cx, int cy, char *str);
+extern void M_DrawCharacter (int cx, int line, int num);
+extern void M_DrawTransPic (int x, int y, qpic_t *pic);
+extern void M_DrawPic (int x, int y, qpic_t *pic);
+
+typedef enum {MS_WINDOWED, MS_FULLSCREEN, MS_FULLDIB, MS_UNINIT} modestate_t;
+
+typedef struct {
+    modestate_t type;
+    int         width;
+    int         height;
+    int         modenum;
+    int         mode13;
+    int         stretched;
+    int         dib;
+    int         fullscreen;
+    int         bpp;
+    int         halfscreen;
+    char        modedesc[13];
+} vmode_t;
+
+typedef struct
+{
+    int     modenum;
+    char    *desc;
+    int     iscur;
+    int     ismode13;
+    int     width;
+} modedesc_t;
+
+int         vid_modenum = 0;
+int         vid_testingmode, vid_realmode;
+double      vid_testendtime;
+int         vid_default = 0;
+static int  windowed_default;
+static int  vid_line, vid_wmodes;
+
+static vmode_t  modelist[MAX_MODE_LIST];
+static int      nummodes = 9;
+static vmode_t  *pcurrentmode;
+static vmode_t  badmode;
+
+char testdesc[13];
+
+static modedesc_t   modedescs[MAX_MODEDESCS];
+
+
+
+
 void    VID_SetPalette (unsigned char *palette)
 {
 	int		i;
@@ -628,14 +705,64 @@ char *Sys_ConsoleInput (void)
 }
 
 /*
+=================
+VID_GetModePtr
+=================
+*/
+vmode_t *VID_GetModePtr (int modenum)
+{
+
+    if ((modenum >= 0) && (modenum < nummodes))
+        return &modelist[modenum];
+    else
+        return &badmode;
+}
+
+/*
+=================
+VID_GetModeDescription2
+
+Tacks on "windowed" or "fullscreen"
+=================
+*/
+char *VID_GetModeDescription2 (int mode)
+{
+    static char pinfo[40];
+    vmode_t     *pv;
+    if ((mode < 0) || (mode >= nummodes))
+        return NULL;
+
+    //VID_CheckModedescFixup (mode);
+
+    pv = VID_GetModePtr (mode);
+
+    sprintf(pinfo,"%s fullscreen", pv->modedesc); //TODO
+    return pinfo;
+
+    if (modelist[mode].type == MS_FULLSCREEN)
+    {
+        sprintf(pinfo,"%s fullscreen", pv->modedesc);
+    }
+    else if (modelist[mode].type == MS_FULLDIB)
+    {
+        sprintf(pinfo,"%s fullscreen", pv->modedesc);
+    }
+    else
+    {
+        sprintf(pinfo, "%s windowed", pv->modedesc);
+    }
+
+    return pinfo;
+}
+
+/*
 ================
 VID_MenuDraw
 ================
 */
 void VID_MenuDraw (void)
 {
-    puts("TODO");
-    /*qpic_t          *p;
+    qpic_t          *p;
     char            *ptr;
     int                     lnummodes, i, j, k, column, row, dup, dupmode;
     char            temp[100];
@@ -645,6 +772,18 @@ void VID_MenuDraw (void)
     p = Draw_CachePic ("gfx/vidmodes.lmp");
     M_DrawPic ( (320-p->width)/2, 4, p);
 
+    strcpy(testdesc, "123x456");
+
+    vid_wmodes = 9;
+    for (i=0 ; i<9 ; i++)
+    {
+        modedescs[i].modenum = i + 1;
+        modedescs[i].desc = testdesc;
+        modedescs[i].ismode13 = 0;
+        modedescs[i].iscur = 0;
+    }
+    modedescs[0].iscur = 1;
+    /*
     for (i=0 ; i<3 ; i++)
     {
             ptr = VID_GetModeDescriptionMemCheck (i);
@@ -725,6 +864,7 @@ void VID_MenuDraw (void)
                     }
             }
     }
+    */
 
 
     M_Print (13*8, 36, "Windowed Modes");
@@ -807,7 +947,7 @@ void VID_MenuDraw (void)
                     row += 3*8;
 
             M_DrawCharacter (column, row, 12+((int)(realtime*4)&1));
-    }*/
+    }
 }
 
 /*
@@ -817,10 +957,8 @@ VID_MenuKey
 */
 void VID_MenuKey (int key)
 {
-    puts("TODO");
-    /*
-    if (vid_testingmode)
-        return;
+    //if (vid_testingmode)
+    //    return;
 
     switch (key)
     {
@@ -877,7 +1015,7 @@ void VID_MenuKey (int key)
 
     case K_ENTER:
         S_LocalSound ("misc/menu1.wav");
-        VID_SetMode (modedescs[vid_line].modenum, vid_curpal);
+        //VID_SetMode (modedescs[vid_line].modenum, vid_curpal);
         break;
 
     case 'T':
@@ -886,23 +1024,23 @@ void VID_MenuKey (int key)
     // have to set this before setting the mode because WM_PAINT
     // happens during the mode set and does a VID_Update, which
     // checks vid_testingmode
-        vid_testingmode = 1;
+        /*vid_testingmode = 1;
         vid_testendtime = realtime + 5.0;
 
         if (!VID_SetMode (modedescs[vid_line].modenum, vid_curpal))
         {
             vid_testingmode = 0;
-        }
+        }*/
         break;
 
     case 'D':
     case 'd':
         S_LocalSound ("misc/menu1.wav");
-        firstupdate = 0;
-        Cvar_SetValue ("_vid_default_mode_win", vid_modenum);
+        //firstupdate = 0;
+        //Cvar_SetValue ("_vid_default_mode_win", vid_modenum);
         break;
 
     default:
         break;
-    }*/
+    }
 }
