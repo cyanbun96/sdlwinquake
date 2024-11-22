@@ -116,7 +116,7 @@ static int      nummodes = 9;
 static vmode_t  *pcurrentmode;
 static vmode_t  badmode;
 
-char testdesc[13];
+char desclist[20][13];
 
 static modedesc_t   modedescs[MAX_MODEDESCS];
 
@@ -720,6 +720,26 @@ vmode_t *VID_GetModePtr (int modenum)
 
 /*
 =================
+VID_GetModeDescription
+=================
+*/
+char *VID_GetModeDescription (int mode)
+{
+        char            *pinfo;
+        vmode_t         *pv;
+
+        if ((mode < 0) || (mode >= nummodes))
+                return NULL;
+
+        // VID_CheckModedescFixup (mode);
+
+        pv = VID_GetModePtr (mode);
+        pinfo = pv->modedesc;
+        return pinfo;
+}
+
+/*
+=================
 VID_GetModeDescription2
 
 Tacks on "windowed" or "fullscreen"
@@ -772,21 +792,23 @@ void VID_MenuDraw (void)
     p = Draw_CachePic ("gfx/vidmodes.lmp");
     M_DrawPic ( (320-p->width)/2, 4, p);
 
-    strcpy(testdesc, "123x456");
+    // CyanBun96: This whole menu isn't about real resolutions anyway since
+    // all of them get scaled to the window size in the end, so these modes
+    // here are just some nice-looking classics from the original
+    strcpy(modelist[0].modedesc, "320x240");
+    strcpy(modelist[1].modedesc, "640x480");
+    strcpy(modelist[2].modedesc, "800x600");
+    strcpy(modelist[3].modedesc, "123x124");
+    strcpy(modelist[4].modedesc, "123x125");
+    strcpy(modelist[5].modedesc, "123x126");
+    strcpy(modelist[6].modedesc, "123x127");
+    strcpy(modelist[7].modedesc, "123x128");
+    strcpy(modelist[8].modedesc, "123x129");
 
-    vid_wmodes = 9;
-    for (i=0 ; i<9 ; i++)
-    {
-        modedescs[i].modenum = i + 1;
-        modedescs[i].desc = testdesc;
-        modedescs[i].ismode13 = 0;
-        modedescs[i].iscur = 0;
-    }
     modedescs[0].iscur = 1;
-    /*
     for (i=0 ; i<3 ; i++)
     {
-            ptr = VID_GetModeDescriptionMemCheck (i);
+            ptr = VID_GetModeDescription (i);
             modedescs[i].modenum = modelist[i].modenum;
             modedescs[i].desc = ptr;
             modedescs[i].ismode13 = 0;
@@ -797,11 +819,13 @@ void VID_MenuDraw (void)
     }
 
     vid_wmodes = 3;
-    lnummodes = VID_NumModes ();
+
+    // lnummodes = VID_NumModes ();
+    lnummodes = 9;
 
     for (i=3 ; i<lnummodes ; i++)
     {
-            ptr = VID_GetModeDescriptionMemCheck (i);
+            ptr = VID_GetModeDescription (i);
             pv = VID_GetModePtr (i);
 
     // we only have room for 15 fullscreen modes, so don't allow
@@ -864,7 +888,6 @@ void VID_MenuDraw (void)
                     }
             }
     }
-    */
 
 
     M_Print (13*8, 36, "Windowed Modes");

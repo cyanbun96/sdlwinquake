@@ -39,6 +39,8 @@ Planned:
 
 -Mouse sensitivity for widescreen resolutions
 
+-Non-square pixels
+
 -Proper higher resolution support
 
 -Audio rate configuration
@@ -47,6 +49,11 @@ Planned:
 
 ---Video configuration menu
 
+Maybe:
+
+-Brown menu background filter, DOS Quake-style
+
+-Modern mod support
 
 Original readme below.
 ------------
