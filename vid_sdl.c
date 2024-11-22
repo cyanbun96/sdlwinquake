@@ -795,15 +795,17 @@ void VID_MenuDraw (void)
     // CyanBun96: This whole menu isn't about real resolutions anyway since
     // all of them get scaled to the window size in the end, so these modes
     // here are just some nice-looking classics from the original
-    strcpy(modelist[0].modedesc, "320x240");
+    // taken from WINQUAKE.EXE ran through wine
+    strcpy(modelist[0].modedesc, "320x240"); // windowed
     strcpy(modelist[1].modedesc, "640x480");
     strcpy(modelist[2].modedesc, "800x600");
-    strcpy(modelist[3].modedesc, "123x124");
-    strcpy(modelist[4].modedesc, "123x125");
-    strcpy(modelist[5].modedesc, "123x126");
-    strcpy(modelist[6].modedesc, "123x127");
-    strcpy(modelist[7].modedesc, "123x128");
-    strcpy(modelist[8].modedesc, "123x129");
+
+    strcpy(modelist[3].modedesc, "320x200"); // fullscreen
+    strcpy(modelist[4].modedesc, "320x240");
+    strcpy(modelist[5].modedesc, "640x350");
+    strcpy(modelist[6].modedesc, "640x400");
+    strcpy(modelist[7].modedesc, "640x480");
+    strcpy(modelist[8].modedesc, "800x600");
 
     modedescs[0].iscur = 1;
     for (i=0 ; i<3 ; i++)

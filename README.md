@@ -39,6 +39,8 @@ Planned:
 
 -Mouse sensitivity for widescreen resolutions
 
+-Proper UI scaling
+
 -Non-square pixels
 
 -Proper higher resolution support
