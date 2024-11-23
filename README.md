@@ -35,6 +35,8 @@ Changes from upstream:
 
 ---"Use Mouse" option in windowed mode (also _windowed_mouse cvar)
 
+---Video configuration menu (mostly for show, use -width and -heigth)
+
 Planned:
 
 -Mouse sensitivity for widescreen resolutions
@@ -48,8 +50,6 @@ Planned:
 -Audio rate configuration
 
 -General feature parity with the original WinQuake
-
----Video configuration menu
 
 Maybe:
 

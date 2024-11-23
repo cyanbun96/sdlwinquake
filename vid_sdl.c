@@ -39,6 +39,7 @@ static float   mouse_x, mouse_y;
 static int mouse_oldbuttonstate = 0;
 
 void VID_CalcScreenDimensions();
+int VID_AllocBuffers(int width, int height);
 
 void VID_MenuDraw (void);
 void VID_MenuKey (int key);
@@ -49,10 +50,12 @@ void (*vid_menukeyfn)(int key) = VID_MenuKey;
 // CyanBun96: Video Options menu types and functions
 
 #define MAX_COLUMN_SIZE     5
+#define MAX_MODE_LIST       30
+#define VID_ROW_SIZE        3
+#define MODE_WINDOWED       0
 #define MODE_AREA_HEIGHT    (MAX_COLUMN_SIZE + 6)
-#define MAX_MODEDESCS       (MAX_COLUMN_SIZE*3)
-#define MAX_MODE_LIST   30
-#define VID_ROW_SIZE    3
+#define MAX_MODEDESCS       (MAX_COLUMN_SIZE * 3)
+#define NO_MODE             (MODE_WINDOWED - 1)
 
 // Note that 0 is MODE_WINDOWED
 cvar_t      vid_mode = {"vid_mode","0", false};
@@ -191,6 +194,7 @@ void VID_UnlockBuffer (void)
 void    VID_Init (unsigned char *palette)
 {
     Cvar_RegisterVariable (&_windowed_mouse);
+    Cvar_RegisterVariable (&vid_mode);
 
     int pnum, chunk;
     byte *cache;
@@ -316,7 +320,10 @@ void    VID_Init (unsigned char *palette)
     vid.conrowbytes = vid.rowbytes;
     vid.direct = (pixel_t *) screen->pixels;
     
+    // TODO use VID_AllocBuffers instead
     // allocate z buffer and surface cache
+    VID_AllocBuffers(vid.width, vid.height);
+    /*
     chunk = vid.width * vid.height * sizeof (*d_pzbuffer);
     cachesize = D_SurfaceCacheForRes (vid.width, vid.height);
     chunk += cachesize;
@@ -328,6 +335,7 @@ void    VID_Init (unsigned char *palette)
         cache = (byte *) d_pzbuffer
                 + vid.width * vid.height * sizeof (*d_pzbuffer);
     D_InitCaches (cache, cachesize);
+    */
 
     // initialize the mouse
     SDL_ShowCursor(0);
@@ -424,19 +432,19 @@ void    VID_Update (vrect_t *rects)
     // adding a lot of overhead. In my tests, software rendering accomplished
     // the same result with almost a 200% performance increase.
 
-    if (!force_old_render) { // hardware-accelerated rendering
-        SDL_LockTexture(texture, &blitRect, &argbbuffer->pixels,
-            &argbbuffer->pitch);
-        SDL_LowerBlit(screen, &blitRect, argbbuffer, &blitRect);
-        SDL_RenderClear(renderer);
-        SDL_UnlockTexture(texture);
-        SDL_RenderCopy(renderer, texture, NULL, &destRect);
-        SDL_RenderPresent(renderer);
-    }
-    else { // pure software rendering
+    if (force_old_render) { // pure software rendering
         SDL_UpperBlit(screen, NULL, scaleBuffer, NULL);
         SDL_UpperBlitScaled(scaleBuffer, &blitRect, windowSurface, &destRect);
         SDL_UpdateWindowSurface(window);
+    }
+    else { // hardware-accelerated rendering
+        SDL_LockTexture(texture, &blitRect, &argbbuffer->pixels,
+            &argbbuffer->pitch);
+        SDL_LowerBlit(screen, &blitRect, argbbuffer, &blitRect);
+        SDL_UnlockTexture(texture);
+        SDL_RenderClear(renderer);
+        SDL_RenderCopy(renderer, texture, NULL, &destRect);
+        SDL_RenderPresent(renderer);
     }
 }
 
@@ -756,14 +764,7 @@ char *VID_GetModeDescription2 (int mode)
 
     pv = VID_GetModePtr (mode);
 
-    sprintf(pinfo,"%s fullscreen", pv->modedesc); //TODO
-    return pinfo;
-
-    if (modelist[mode].type == MS_FULLSCREEN)
-    {
-        sprintf(pinfo,"%s fullscreen", pv->modedesc);
-    }
-    else if (modelist[mode].type == MS_FULLDIB)
+    if (mode >= 3)
     {
         sprintf(pinfo,"%s fullscreen", pv->modedesc);
     }
@@ -773,6 +774,168 @@ char *VID_GetModeDescription2 (int mode)
     }
 
     return pinfo;
+}
+
+/*
+================
+VID_AllocBuffers
+================
+*/
+int VID_AllocBuffers (int width, int height)
+{
+    int pnum, chunk;
+    byte *cache;
+    int cachesize;
+    // allocate z buffer and surface cache
+    chunk = vid.width * vid.height * sizeof (*d_pzbuffer);
+    cachesize = D_SurfaceCacheForRes (vid.width, vid.height);
+    chunk += cachesize;
+    d_pzbuffer = Hunk_HighAllocName(chunk, "video");
+    if (d_pzbuffer == NULL)
+        Sys_Error ("Not enough memory for video mode\n");
+
+    // initialize the cache memory
+    cache = (byte *) d_pzbuffer
+            + vid.width * vid.height * sizeof (*d_pzbuffer);
+
+    D_InitCaches (cache, cachesize);
+
+    return true;
+}
+
+int VID_SetVidMode (int modenum)
+{
+    int newwidth = 320, newheight = 240;
+
+    // CyanBun96: BEHOLD, The Mother Of All Hardcodes!
+    switch (modenum) {
+        case 0: newwidth = 320; newheight = 240; break;
+        case 1: newwidth = 640; newheight = 480; break;
+        case 2: newwidth = 800; newheight = 600; break;
+        case 3: newwidth = 320; newheight = 200; break;
+        case 4: newwidth = 320; newheight = 240; break;
+        case 5: newwidth = 640; newheight = 350; break;
+        case 6: newwidth = 640; newheight = 400; break;
+        case 7: newwidth = 640; newheight = 480; break;
+        case 8: newwidth = 800; newheight = 600; break;
+        default: return 0;
+    }
+
+    vid.width = newwidth;
+    vid.height = newheight;
+
+    // CyanBun96: why do surfaces get freed but textures get destroyed :(
+    SDL_FreeSurface(screen);
+    screen = SDL_CreateRGBSurfaceWithFormat(0, vid.width, vid.height, 8, SDL_PIXELFORMAT_INDEX8);
+    if (!force_old_render) {
+        SDL_FreeSurface(argbbuffer);
+        argbbuffer = SDL_CreateRGBSurfaceWithFormatFrom(
+            NULL, vid.width, vid.height, 0, 0, SDL_PIXELFORMAT_ARGB8888);
+        SDL_DestroyTexture(texture);
+        texture = SDL_CreateTexture(renderer,
+                                    SDL_PIXELFORMAT_ARGB8888,
+                                    SDL_TEXTUREACCESS_STREAMING,
+                                    vid.width, vid.height);
+    }
+    else {
+        SDL_FreeSurface(scaleBuffer);
+        scaleBuffer = SDL_CreateRGBSurfaceWithFormat(
+            0, vid.width, vid.height, 8, SDL_GetWindowPixelFormat(window));
+    }
+
+    if (!screen)
+        return false;
+
+    VGA_width = vid.conwidth = vid.width;
+    VGA_height = vid.conheight = vid.height;
+    vid.aspect = ((float)vid.height / (float)vid.width) * (320.0 / 240.0);
+    VGA_pagebase = vid.buffer = screen->pixels;
+    VGA_rowbytes = vid.rowbytes = screen->pitch;
+    vid.conbuffer = vid.buffer;
+    vid.conrowbytes = vid.rowbytes;
+    vid.direct = (pixel_t *) screen->pixels;
+
+    int pnum, chunk;
+    byte *cache;
+    int cachesize;
+
+    if (!VID_AllocBuffers (newwidth, newheight))
+    {
+        // couldn't get memory for this mode; try to fall back to previous mode
+        return false;
+    }
+    vid.recalc_refdef = 1;
+
+    VID_CalcScreenDimensions();
+
+    if (modenum <= 2) // windowed modes
+    {
+        SDL_SetWindowFullscreen(window, 0);
+        SDL_SetWindowSize(window, newwidth, newheight);
+        SDL_SetWindowPosition(window,
+                SDL_WINDOWPOS_CENTERED,
+                SDL_WINDOWPOS_CENTERED);
+    }
+    else // fullscreen modes
+    {
+        SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+    }
+    // Sometimes crashes when moving from a higher resolution to a lower one
+    // with hardware rendering enabled, but only if there's no demo playing
+    // and the player's not in-game.
+    // At no particular line, though usually in the update function.
+    // SDL says "double free or corruption (out)"
+    // todo, maybe.
+    return 1;
+}
+
+int VID_SetMode (int modenum, unsigned char *palette)
+{
+    int             original_mode, temp, dummy;
+    qboolean        stat;
+
+    while ((modenum >= nummodes) || (modenum < 0))
+    {
+        if (vid_modenum == NO_MODE)
+        {
+            if (modenum == vid_default)
+            {
+                modenum = windowed_default;
+            }
+            else
+            {
+                modenum = vid_default;
+            }
+
+            Cvar_SetValue ("vid_mode", (float)modenum);
+        }
+        else
+        {
+            Cvar_SetValue ("vid_mode", (float)vid_modenum);
+            return 0;
+        }
+    }
+
+    int force_mode_set = 1;
+    if (!force_mode_set && (modenum == vid_modenum))
+        return true;
+
+    if (vid_modenum == NO_MODE)
+        original_mode = windowed_default;
+    else
+        original_mode = vid_modenum;
+
+    stat = VID_SetVidMode(modenum);
+
+    if (!stat)
+    {
+        VID_SetVidMode (original_mode);
+        return false;
+    }
+
+    VID_SetPalette(palette);
+    vid_modenum = modenum;
+    Cvar_SetValue ("vid_mode", (float)vid_modenum);
 }
 
 /*
@@ -982,8 +1145,8 @@ VID_MenuKey
 */
 void VID_MenuKey (int key)
 {
-    //if (vid_testingmode)
-    //    return;
+    if (vid_testingmode)
+        return;
 
     switch (key)
     {
@@ -1040,10 +1203,10 @@ void VID_MenuKey (int key)
 
     case K_ENTER:
         S_LocalSound ("misc/menu1.wav");
-        //VID_SetMode (modedescs[vid_line].modenum, vid_curpal);
+        VID_SetMode (vid_line, vid_curpal);
         break;
 
-    case 'T':
+    case 'T': //TODO
     case 't':
         S_LocalSound ("misc/menu1.wav");
     // have to set this before setting the mode because WM_PAINT
@@ -1058,11 +1221,11 @@ void VID_MenuKey (int key)
         }*/
         break;
 
-    case 'D':
+    case 'D': //TODO
     case 'd':
         S_LocalSound ("misc/menu1.wav");
         //firstupdate = 0;
-        //Cvar_SetValue ("_vid_default_mode_win", vid_modenum);
+        Cvar_SetValue ("_vid_default_mode_win", vid_modenum);
         break;
 
     default:
