@@ -31,6 +31,10 @@ Changes from upstream:
 
 -Changed audio rate to 11025 for more muffled WinQuake sound
 
+-Non-square pixels for 320x200 and 640x400 modes
+
+---Can be forced on other modes with -stretchpixels
+
 -General feature parity with the original WinQuake
 
 ---"Use Mouse" option in windowed mode (also _windowed_mouse cvar)
@@ -42,8 +46,6 @@ Planned:
 -Mouse sensitivity for widescreen resolutions
 
 -Proper UI scaling
-
--Non-square pixels
 
 -Proper higher resolution support
 

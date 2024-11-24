@@ -18,6 +18,8 @@ SDL_Surface *scaleBuffer;
 int force_old_render;
 Uint32 SDLWindowFlags;
 
+int stretchpixels = 0; // 1x1.2 pixels for 8:5 modes
+
 cvar_t _windowed_mouse = {"_windowed_mouse","0", true};
 
 viddef_t    vid;                // global video state
@@ -270,6 +272,11 @@ void    VID_Init (unsigned char *palette)
     else
         force_old_render = 0;
 
+    if ((pnum=COM_CheckParm("-stretchpixels")))
+        stretchpixels = 1;
+    else
+        stretchpixels = 0;
+
     if (vid.width > 1280 || vid.height > 1024)
     {
         Con_Printf("WARNING: vanilla maximum resolution is 1280x1024\n");
@@ -320,22 +327,8 @@ void    VID_Init (unsigned char *palette)
     vid.conrowbytes = vid.rowbytes;
     vid.direct = (pixel_t *) screen->pixels;
     
-    // TODO use VID_AllocBuffers instead
     // allocate z buffer and surface cache
     VID_AllocBuffers(vid.width, vid.height);
-    /*
-    chunk = vid.width * vid.height * sizeof (*d_pzbuffer);
-    cachesize = D_SurfaceCacheForRes (vid.width, vid.height);
-    chunk += cachesize;
-    d_pzbuffer = Hunk_HighAllocName(chunk, "video");
-    if (d_pzbuffer == NULL)
-        Sys_Error ("Not enough memory for video mode\n");
-
-    // initialize the cache memory 
-        cache = (byte *) d_pzbuffer
-                + vid.width * vid.height * sizeof (*d_pzbuffer);
-    D_InitCaches (cache, cachesize);
-    */
 
     // initialize the mouse
     SDL_ShowCursor(0);
@@ -375,6 +368,8 @@ void    VID_CalcScreenDimensions ()
     int bufW = vid.width;
     int bufH = vid.height;
     float bufAspect = (float)bufW / bufH;
+
+    if (stretchpixels) bufAspect /= 1.2;
     
     // Calculate scaled dimensions
     int destW, destH;
@@ -821,6 +816,11 @@ int VID_SetVidMode (int modenum)
         default: return 0;
     }
 
+    if (modenum == 3 || modenum == 6)
+        stretchpixels = 1;
+    else
+        stretchpixels = 0;
+
     vid.width = newwidth;
     vid.height = newheight;
 
@@ -961,7 +961,6 @@ void VID_MenuDraw (void)
     strcpy(modelist[7].modedesc, "640x480");
     strcpy(modelist[8].modedesc, "800x600");
 
-    modedescs[0].iscur = 1;
     for (i=0 ; i<3 ; i++)
     {
             ptr = VID_GetModeDescription (i);
