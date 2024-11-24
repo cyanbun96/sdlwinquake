@@ -414,7 +414,14 @@ void Con_Printf (char *fmt, ...)
 		if (!inupdate)
 		{
 			inupdate = true;
-			SCR_UpdateScreen ();
+			//SCR_UpdateScreen ();
+            // CyanBun96: Had to remove this because it caused crashes when
+            // switching resolutions with hardware rendering on. From what I
+            // can tell, this would call SDL_RenderPresent before it's ready.
+            // Why is it not ready at this point but is fine on the next call?
+            // And why does it not crash if the game is started, e.g. a demo?
+            // Whatever, I don't see any effect after commenting it out.
+            // Fix this properly yourself if you find a reason to care.
 			inupdate = false;
 		}
 	}

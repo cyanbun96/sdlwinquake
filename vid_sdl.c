@@ -859,11 +859,8 @@ int VID_SetVidMode (int modenum)
     byte *cache;
     int cachesize;
 
-    if (!VID_AllocBuffers (newwidth, newheight))
-    {
-        // couldn't get memory for this mode; try to fall back to previous mode
-        return false;
-    }
+    VID_AllocBuffers (newwidth, newheight);
+
     vid.recalc_refdef = 1;
 
     VID_CalcScreenDimensions();
@@ -880,12 +877,6 @@ int VID_SetVidMode (int modenum)
     {
         SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
     }
-    // Sometimes crashes when moving from a higher resolution to a lower one
-    // with hardware rendering enabled, but only if there's no demo playing
-    // and the player's not in-game.
-    // At no particular line, though usually in the update function.
-    // SDL says "double free or corruption (out)"
-    // todo, maybe.
     return 1;
 }
 
