@@ -331,6 +331,65 @@ void Draw_Pic (int x, int y, qpic_t *pic)
 	}
 }
 
+/*
+================
+Draw_PicScaled
+================
+*/
+void Draw_PicScaled (int x, int y, qpic_t *pic, int scale)
+{
+	byte			*dest, *source;
+	unsigned short	*pusdest;
+	int				v, u, i, j, k;
+
+	if ((x < 0) ||
+		(x + pic->width > vid.width) ||
+		(y < 0) ||
+		(y + pic->height > vid.height))
+	{
+		Sys_Error ("Draw_Pic: bad coordinates");
+	}
+
+	source = pic->data;
+
+	if (r_pixbytes == 1)
+	{
+		dest = vid.buffer + y * vid.rowbytes + x;
+
+		for (v=0 ; v<pic->height ; v++)
+		{
+            for (k = 0 ; k<scale ; k++)
+            {
+                for (i = 0 ; i<pic->width ; i++)
+                {
+                    for (j = 0 ; j<scale ; j++)
+                    {
+                        dest[i*scale+j] = source[i];
+                    }
+                }
+                dest += vid.rowbytes;
+            }
+            source += pic->width;
+		}
+	}
+	else
+	{
+	// FIXME: pretranslate at load time?
+		pusdest = (unsigned short *)vid.buffer + y * (vid.rowbytes >> 1) + x;
+
+		for (v=0 ; v<pic->height ; v++)
+		{
+			for (u=0 ; u<pic->width ; u++)
+			{
+				pusdest[u] = d_8to16table[source[u]];
+			}
+
+			pusdest += vid.rowbytes >> 1;
+			source += pic->width;
+		}
+	}
+}
+
 
 /*
 =============

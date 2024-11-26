@@ -19,6 +19,7 @@ int force_old_render;
 Uint32 SDLWindowFlags;
 
 int stretchpixels = 0; // 1x1.2 pixels for 8:5 modes
+int uiscale = 2;
 
 cvar_t _windowed_mouse = {"_windowed_mouse","0", true};
 
@@ -76,6 +77,8 @@ cvar_t      vid_windowed_mode = {"vid_windowed_mode","0", true};
 cvar_t      block_switch = {"block_switch","0", true};
 cvar_t      vid_window_x = {"vid_window_x", "0", true};
 cvar_t      vid_window_y = {"vid_window_y", "0", true};
+
+cvar_t      scr_uiscale = {"scr_uiscale", "2", true};
 
 extern void M_Menu_Options_f (void);
 extern void M_Print (int cx, int cy, char *str);
@@ -197,6 +200,7 @@ void    VID_Init (unsigned char *palette)
 {
     Cvar_RegisterVariable (&_windowed_mouse);
     Cvar_RegisterVariable (&vid_mode);
+    Cvar_RegisterVariable (&scr_uiscale);
 
     int pnum, chunk;
     byte *cache;

@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "r_local.h"
 
+extern int uiscale;
 // only the refresh window will be updated unless these variables are flagged 
 int			scr_copytop;
 int			scr_copyeverything;
@@ -254,9 +255,9 @@ static void SCR_CalcRefdef (void)
 	if (size >= 120)
 		sb_lines = 0;		// no status bar at all
 	else if (size >= 110)
-		sb_lines = 24;		// no inventory
+		sb_lines = 24 * uiscale;		// no inventory
 	else
-		sb_lines = 24+16+8;
+		sb_lines = (24+16+8) * uiscale;
 
 // these calculations mirror those in R_Init() for r_refdef, but take no
 // account of water warping
