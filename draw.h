@@ -25,10 +25,12 @@ extern	qpic_t		*draw_disc;	// also used on sbar
 
 void Draw_Init (void);
 void Draw_Character (int x, int y, int num);
+void Draw_CharacterScaled (int x, int y, int num, int scale);
 void Draw_DebugChar (char num);
 void Draw_Pic (int x, int y, qpic_t *pic);
 void Draw_PicScaled (int x, int y, qpic_t *pic, int scale);
 void Draw_TransPic (int x, int y, qpic_t *pic);
+void Draw_TransPicScaled (int x, int y, qpic_t *pic, int scale);
 void Draw_TransPicTranslate (int x, int y, qpic_t *pic, byte *translation);
 void Draw_ConsoleBackground (int lines);
 void Draw_BeginDisc (void);

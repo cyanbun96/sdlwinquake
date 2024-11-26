@@ -122,6 +122,101 @@ void Draw_Init (void)
 }
 
 
+/*
+================
+Draw_CharacterScaled
+
+Draws one 8*8 graphics character with 0 being transparent.
+It can be clipped to the top of the screen to allow the console to be
+smoothly scrolled off.
+================
+*/
+void Draw_CharacterScaled (int x, int y, int num, int scale)
+{
+	byte			*dest;
+	byte			*source;
+	unsigned short	*pusdest;
+	int				drawline;	
+	int				row, col;
+    int             i, j, k;
+
+	num &= 255;
+	
+	if (y <= -8)
+		return;			// totally off screen
+
+#ifdef PARANOID
+	if (y > vid.height - 8 || x < 0 || x > vid.width - 8)
+		Sys_Error ("Con_DrawCharacter: (%i, %i)", x, y);
+	if (num < 0 || num > 255)
+		Sys_Error ("Con_DrawCharacter: char %i", num);
+#endif
+
+	row = num>>4;
+	col = num&15;
+	source = draw_chars + (row<<10) + (col<<3);
+
+	if (y < 0)
+	{	// clipped
+		drawline = 8 + y;
+		source -= 128*y;
+		y = 0;
+	}
+	else
+		drawline = 8;
+
+
+	if (1 || r_pixbytes == 1)
+	{
+		dest = vid.conbuffer + y*vid.conrowbytes + x;
+	
+		while (drawline--)
+		{
+            for (k = 0; k < scale; ++k)
+            {
+                for (j = 0; j < scale; ++j)
+                {
+                    for (i = 0; i < 8; ++i)
+                    {
+                        if (source[i])
+                            dest[i*scale+j] = source[i];
+                    }
+                }
+                dest += vid.conrowbytes;
+            }
+			source += 128;
+		}
+	}
+	else
+	{
+	// FIXME: pre-expand to native format?
+		pusdest = (unsigned short *)
+				((byte *)vid.conbuffer + y*vid.conrowbytes + (x<<1));
+
+		while (drawline--)
+		{
+			if (source[0])
+				pusdest[0] = d_8to16table[source[0]];
+			if (source[1])
+				pusdest[1] = d_8to16table[source[1]];
+			if (source[2])
+				pusdest[2] = d_8to16table[source[2]];
+			if (source[3])
+				pusdest[3] = d_8to16table[source[3]];
+			if (source[4])
+				pusdest[4] = d_8to16table[source[4]];
+			if (source[5])
+				pusdest[5] = d_8to16table[source[5]];
+			if (source[6])
+				pusdest[6] = d_8to16table[source[6]];
+			if (source[7])
+				pusdest[7] = d_8to16table[source[7]];
+
+			source += 128;
+			pusdest += (vid.conrowbytes >> 1);
+		}
+	}
+}
 
 /*
 ================
@@ -302,7 +397,7 @@ void Draw_Pic (int x, int y, qpic_t *pic)
 
 	source = pic->data;
 
-	if (r_pixbytes == 1)
+	if (1 || r_pixbytes == 1)
 	{
 		dest = vid.buffer + y * vid.rowbytes + x;
 
@@ -358,11 +453,11 @@ void Draw_PicScaled (int x, int y, qpic_t *pic, int scale)
 
 		for (v=0 ; v<pic->height ; v++)
 		{
-            for (k = 0 ; k<scale ; k++)
+            for (k=0 ; k<scale ; k++)
             {
-                for (i = 0 ; i<pic->width ; i++)
+                for (i=0 ; i<pic->width ; i++)
                 {
-                    for (j = 0 ; j<scale ; j++)
+                    for (j=0 ; j<scale ; j++)
                     {
                         dest[i*scale+j] = source[i];
                     }
@@ -382,6 +477,101 @@ void Draw_PicScaled (int x, int y, qpic_t *pic, int scale)
 			for (u=0 ; u<pic->width ; u++)
 			{
 				pusdest[u] = d_8to16table[source[u]];
+			}
+
+			pusdest += vid.rowbytes >> 1;
+			source += pic->width;
+		}
+	}
+}
+
+
+/*
+=============
+Draw_TransPicScaled
+=============
+*/
+void Draw_TransPicScaled (int x, int y, qpic_t *pic, int scale)
+{
+	byte	*dest, *source, tbyte;
+	unsigned short	*pusdest;
+	int				v, u, i, k;
+
+	if (x < 0 || (unsigned)(x + pic->width) > vid.width || y < 0 ||
+		 (unsigned)(y + pic->height) > vid.height)
+	{
+		Sys_Error ("Draw_TransPic: bad coordinates");
+	}
+		
+	source = pic->data;
+
+    // CyanBun96: That right there is a for loop inside of an if statement
+    // inside of a for loop inside of a for loop inside of a for loop inside
+    // of an if statement inside of an if statement.
+    // TODO: put this thing out of its misery and write a new one.
+	if (1 || r_pixbytes == 1)
+	{
+		dest = vid.buffer + y * vid.rowbytes + x;
+
+		if (1 || pic->width & 7) // CyanBun96: i cant be fucked to unroll this
+		{	// general
+			for (v=0 ; v<pic->height ; v++)
+			{
+                for (k=0 ; k<scale ; k++)
+                {
+                    for (u=0 ; u<pic->width ; u++)
+                        if ( (tbyte=source[u]) != TRANSPARENT_COLOR)
+                            for (i=0 ; i<scale ; i++)
+                                dest[u*scale+i] = tbyte;
+        
+                    dest += vid.rowbytes;
+                }
+                source += pic->width;
+			}
+		}
+		else
+		{	// unwound
+			for (v=0 ; v<pic->height ; v++)
+			{
+				for (u=0 ; u<pic->width ; u+=8)
+				{
+					if ( (tbyte=source[u]) != TRANSPARENT_COLOR)
+						dest[u] = tbyte;
+					if ( (tbyte=source[u+1]) != TRANSPARENT_COLOR)
+						dest[u+1] = tbyte;
+					if ( (tbyte=source[u+2]) != TRANSPARENT_COLOR)
+						dest[u+2] = tbyte;
+					if ( (tbyte=source[u+3]) != TRANSPARENT_COLOR)
+						dest[u+3] = tbyte;
+					if ( (tbyte=source[u+4]) != TRANSPARENT_COLOR)
+						dest[u+4] = tbyte;
+					if ( (tbyte=source[u+5]) != TRANSPARENT_COLOR)
+						dest[u+5] = tbyte;
+					if ( (tbyte=source[u+6]) != TRANSPARENT_COLOR)
+						dest[u+6] = tbyte;
+					if ( (tbyte=source[u+7]) != TRANSPARENT_COLOR)
+						dest[u+7] = tbyte;
+				}
+				dest += vid.rowbytes;
+				source += pic->width;
+			}
+		}
+	}
+	else
+	{
+	// FIXME: pretranslate at load time?
+		pusdest = (unsigned short *)vid.buffer + y * (vid.rowbytes >> 1) + x;
+
+		for (v=0 ; v<pic->height ; v++)
+		{
+			for (u=0 ; u<pic->width ; u++)
+			{
+				tbyte = source[u];
+
+				if (tbyte != TRANSPARENT_COLOR)
+				{
+					pusdest[u] = d_8to16table[tbyte];
+				}
 			}
 
 			pusdest += vid.rowbytes >> 1;

@@ -261,9 +261,9 @@ Sbar_DrawPic
 void Sbar_DrawPic (int x, int y, qpic_t *pic)
 {
 	if (cl.gametype == GAME_DEATHMATCH)
-		Draw_Pic (x /* + ((vid.width - 320)>>1)*/, y*uiscale + (vid.height-SBAR_HEIGHT*uiscale), pic); //FIXME
+		Draw_PicScaled (x*uiscale /* + ((vid.width - 320)>>1)*/, y*uiscale + (vid.height-SBAR_HEIGHT*uiscale), pic, uiscale);
 	else
-		Draw_PicScaled (x + ((vid.width - 320 * uiscale)>>1), y*uiscale + (vid.height-SBAR_HEIGHT*uiscale), pic, uiscale);
+		Draw_PicScaled (x*uiscale + ((vid.width - 320 * uiscale)>>1), y*uiscale + (vid.height-SBAR_HEIGHT*uiscale), pic, uiscale);
 }
 
 /*
@@ -273,11 +273,10 @@ Sbar_DrawTransPic
 */
 void Sbar_DrawTransPic (int x, int y, qpic_t *pic)
 {
-    return;
 	if (cl.gametype == GAME_DEATHMATCH)
-		Draw_TransPic (x /*+ ((vid.width - 320)>>1)*/, y + (vid.height-SBAR_HEIGHT), pic);
+		Draw_TransPicScaled (x*uiscale /*+ ((vid.width - 320)>>1)*/, y*uiscale + (vid.height-SBAR_HEIGHT*uiscale), pic, uiscale);
 	else
-		Draw_TransPic (x + ((vid.width - 320)>>1), y + (vid.height-SBAR_HEIGHT), pic);
+		Draw_TransPicScaled (x*uiscale + ((vid.width - 320 * uiscale)>>1), y*uiscale + (vid.height-SBAR_HEIGHT*uiscale), pic, uiscale);
 }
 
 /*
@@ -289,11 +288,10 @@ Draws one solid graphics character
 */
 void Sbar_DrawCharacter (int x, int y, int num)
 {
-    return;
 	if (cl.gametype == GAME_DEATHMATCH)
-		Draw_Character ( x /*+ ((vid.width - 320)>>1) */ + 4 , y + vid.height-SBAR_HEIGHT, num);
+		Draw_CharacterScaled ( x*uiscale /*+ ((vid.width - 320)>>1) */ + 4 , y*uiscale + (vid.height-SBAR_HEIGHT*uiscale), num, uiscale);
 	else
-		Draw_Character ( x + ((vid.width - 320)>>1) + 4 , y + vid.height-SBAR_HEIGHT, num);
+		Draw_CharacterScaled ( x*uiscale + ((vid.width - 320*uiscale)>>1) + 4 , y*uiscale + (vid.height-SBAR_HEIGHT*uiscale), num, uiscale);
 }
 
 /*
