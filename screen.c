@@ -352,7 +352,7 @@ void SCR_DrawRam (void)
 	if (!r_cache_thrash)
 		return;
 
-	Draw_Pic (scr_vrect.x+32, scr_vrect.y, scr_ram);
+	Draw_PicScaled (scr_vrect.x+32*uiscale, scr_vrect.y, scr_ram, uiscale);
 }
 
 /*
@@ -377,7 +377,7 @@ void SCR_DrawTurtle (void)
 	if (count < 3)
 		return;
 
-	Draw_Pic (scr_vrect.x, scr_vrect.y, scr_turtle);
+	Draw_PicScaled (scr_vrect.x, scr_vrect.y, scr_turtle, uiscale);
 }
 
 /*
@@ -392,7 +392,7 @@ void SCR_DrawNet (void)
 	if (cls.demoplayback)
 		return;
 
-	Draw_Pic (scr_vrect.x+64, scr_vrect.y, scr_net);
+	Draw_PicScaled (scr_vrect.x+64*uiscale, scr_vrect.y, scr_net, uiscale);
 }
 
 /*
@@ -411,8 +411,8 @@ void SCR_DrawPause (void)
 		return;
 
 	pic = Draw_CachePic ("gfx/pause.lmp");
-	Draw_Pic ( (vid.width - pic->width)/2, 
-		(vid.height - 48 - pic->height)/2, pic);
+	Draw_PicScaled ( (vid.width - pic->width*uiscale)/2, 
+		(vid.height - 48*uiscale - pic->height*uiscale)/2, pic, uiscale);
 }
 
 
@@ -430,8 +430,8 @@ void SCR_DrawLoading (void)
 		return;
 		
 	pic = Draw_CachePic ("gfx/loading.lmp");
-	Draw_Pic ( (vid.width - pic->width)/2, 
-		(vid.height - 48 - pic->height)/2, pic);
+	Draw_PicScaled ( (vid.width - pic->width*uiscale)/2, 
+		(vid.height - 48*uiscale - pic->height*uiscale)/2, pic, uiscale);
 }
 
 
