@@ -1064,7 +1064,7 @@ void Sbar_IntermissionNumber (int x, int y, int num, int digits, int color)
 	if (l > digits)
 		ptr += (l-digits);
 	if (l < digits)
-		x += (digits-l)*24;
+		x += (digits-l)*24*uiscale;
 
 	while (*ptr)
 	{
@@ -1073,8 +1073,8 @@ void Sbar_IntermissionNumber (int x, int y, int num, int digits, int color)
 		else
 			frame = *ptr -'0';
 
-		Draw_TransPic (x,y,sb_nums[color][frame]);
-		x += 24;
+		Draw_TransPicScaled (x,y,sb_nums[color][frame],uiscale);
+		x += 24*uiscale;
 		ptr++;
 	}
 }
@@ -1273,6 +1273,7 @@ void Sbar_IntermissionOverlay (void)
 	qpic_t	*pic;
 	int		dig;
 	int		num;
+    int     pad; // padding for scaling
 
 	scr_copyeverything = 1;
 	scr_fullupdate = 0;
@@ -1283,27 +1284,28 @@ void Sbar_IntermissionOverlay (void)
 		return;
 	}
 
-	pic = Draw_CachePic ("gfx/complete.lmp");
-	Draw_Pic (64, 24, pic);
+	pic = Draw_CachePic ("gfx/complete.lmp"); // complete plaque is 192px wide
+	Draw_PicScaled ((vid.width-192*uiscale)/2, 24*uiscale, pic, uiscale);
 
+    pad = (vid.width-320*uiscale)/2;
 	pic = Draw_CachePic ("gfx/inter.lmp");
-	Draw_TransPic (0, 56, pic);
+	Draw_TransPicScaled (pad, 56*uiscale, pic, uiscale);
 
 // time
 	dig = cl.completed_time/60;
-	Sbar_IntermissionNumber (160, 64, dig, 3, 0);
+	Sbar_IntermissionNumber (vid.width/2, 64*uiscale, dig, 3, 0);
 	num = cl.completed_time - dig*60;
-	Draw_TransPic (234,64,sb_colon);
-	Draw_TransPic (246,64,sb_nums[0][num/10]);
-	Draw_TransPic (266,64,sb_nums[0][num%10]);
+	Draw_TransPicScaled (vid.width-pad-86*uiscale,64*uiscale,sb_colon,uiscale);
+	Draw_TransPicScaled (vid.width-pad-74*uiscale,64*uiscale,sb_nums[0][num/10],uiscale);
+	Draw_TransPicScaled (vid.width-pad-54*uiscale,64*uiscale,sb_nums[0][num%10],uiscale);
 
-	Sbar_IntermissionNumber (160, 104, cl.stats[STAT_SECRETS], 3, 0);
-	Draw_TransPic (232,104,sb_slash);
-	Sbar_IntermissionNumber (240, 104, cl.stats[STAT_TOTALSECRETS], 3, 0);
+	Sbar_IntermissionNumber (vid.width/2, 104*uiscale, cl.stats[STAT_SECRETS], 3, 0);
+	Draw_TransPicScaled (vid.width-pad-88*uiscale,104*uiscale,sb_slash,uiscale);
+	Sbar_IntermissionNumber (vid.width-pad-80*uiscale, 104*uiscale, cl.stats[STAT_TOTALSECRETS], 3, 0);
 
-	Sbar_IntermissionNumber (160, 144, cl.stats[STAT_MONSTERS], 3, 0);
-	Draw_TransPic (232,144,sb_slash);
-	Sbar_IntermissionNumber (240, 144, cl.stats[STAT_TOTALMONSTERS], 3, 0);
+	Sbar_IntermissionNumber (vid.width/2, 144*uiscale, cl.stats[STAT_MONSTERS], 3, 0);
+	Draw_TransPicScaled (vid.width-pad-88*uiscale,144*uiscale,sb_slash,uiscale);
+	Sbar_IntermissionNumber (vid.width-pad-80*uiscale, 144*uiscale, cl.stats[STAT_TOTALMONSTERS], 3, 0);
 
 }
 
