@@ -32,6 +32,7 @@ void Draw_PicScaled (int x, int y, qpic_t *pic, int scale);
 void Draw_TransPic (int x, int y, qpic_t *pic);
 void Draw_TransPicScaled (int x, int y, qpic_t *pic, int scale);
 void Draw_TransPicTranslate (int x, int y, qpic_t *pic, byte *translation);
+void Draw_TransPicTranslateScaled (int x, int y, qpic_t *pic, byte *translation, int scale);
 void Draw_ConsoleBackground (int lines);
 void Draw_BeginDisc (void);
 void Draw_EndDisc (void);

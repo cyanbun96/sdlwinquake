@@ -23,6 +23,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
+extern int uiscale;
+
 typedef struct {
 	vrect_t	rect;
 	int		width;
@@ -638,6 +640,97 @@ void Draw_TransPic (int x, int y, qpic_t *pic)
 						dest[u+6] = tbyte;
 					if ( (tbyte=source[u+7]) != TRANSPARENT_COLOR)
 						dest[u+7] = tbyte;
+				}
+				dest += vid.rowbytes;
+				source += pic->width;
+			}
+		}
+	}
+	else
+	{
+	// FIXME: pretranslate at load time?
+		pusdest = (unsigned short *)vid.buffer + y * (vid.rowbytes >> 1) + x;
+
+		for (v=0 ; v<pic->height ; v++)
+		{
+			for (u=0 ; u<pic->width ; u++)
+			{
+				tbyte = source[u];
+
+				if (tbyte != TRANSPARENT_COLOR)
+				{
+					pusdest[u] = d_8to16table[tbyte];
+				}
+			}
+
+			pusdest += vid.rowbytes >> 1;
+			source += pic->width;
+		}
+	}
+}
+
+
+/*
+=============
+Draw_TransPicTranslateScaled
+=============
+*/
+void Draw_TransPicTranslateScaled (int x, int y, qpic_t *pic, byte *translation, int scale)
+{
+	byte	*dest, *source, tbyte;
+	unsigned short	*pusdest;
+	int				v, u, i, k;
+
+	if (x < 0 || (unsigned)(x + pic->width) > vid.width || y < 0 ||
+		 (unsigned)(y + pic->height) > vid.height)
+	{
+		Sys_Error ("Draw_TransPic: bad coordinates");
+	}
+		
+	source = pic->data;
+
+	if (1 || r_pixbytes == 1)
+	{
+		dest = vid.buffer + y * vid.rowbytes + x;
+
+		if (1 || pic->width & 7) // CyanBun96: not unrolling this either.
+		{	// general
+			for (v=0 ; v<pic->height ; v++)
+			{
+                for (k=0 ; k<scale ; k++)
+                {
+                    for (u=0 ; u<pic->width ; u++)
+                        if ( (tbyte=source[u]) != TRANSPARENT_COLOR)
+                            for (i=0 ; i<scale ; i++)
+                                dest[u*scale+i] = translation[tbyte];
+
+                    dest += vid.rowbytes;
+                }
+				source += pic->width;
+			}
+		}
+		else
+		{	// unwound
+			for (v=0 ; v<pic->height ; v++)
+			{
+				for (u=0 ; u<pic->width ; u+=8)
+				{
+					if ( (tbyte=source[u]) != TRANSPARENT_COLOR)
+						dest[u] = translation[tbyte];
+					if ( (tbyte=source[u+1]) != TRANSPARENT_COLOR)
+						dest[u+1] = translation[tbyte];
+					if ( (tbyte=source[u+2]) != TRANSPARENT_COLOR)
+						dest[u+2] = translation[tbyte];
+					if ( (tbyte=source[u+3]) != TRANSPARENT_COLOR)
+						dest[u+3] = translation[tbyte];
+					if ( (tbyte=source[u+4]) != TRANSPARENT_COLOR)
+						dest[u+4] = translation[tbyte];
+					if ( (tbyte=source[u+5]) != TRANSPARENT_COLOR)
+						dest[u+5] = translation[tbyte];
+					if ( (tbyte=source[u+6]) != TRANSPARENT_COLOR)
+						dest[u+6] = translation[tbyte];
+					if ( (tbyte=source[u+7]) != TRANSPARENT_COLOR)
+						dest[u+7] = translation[tbyte];
 				}
 				dest += vid.rowbytes;
 				source += pic->width;
