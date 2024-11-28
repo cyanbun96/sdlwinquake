@@ -1174,23 +1174,27 @@ Draw_FadeScreen
 */
 void Draw_FadeScreen (void)
 {
-	int			x,y;
+	int			x,y,i,j;
 	byte		*pbuf;
 
 	S_ExtraUpdate ();
 
-	for (y=0 ; y<vid.height ; y++)
+	for (y=0 ; y<vid.height/uiscale ; y++)
 	{
-		int	t;
+        for (i=0 ; i<uiscale ; i++)
+        {
+            int	t;
 
-		pbuf = (byte *)(vid.buffer + vid.rowbytes*y);
-		t = (y & 1) << 1;
+            pbuf = (byte *)(vid.buffer + vid.rowbytes*y*uiscale + vid.rowbytes*i);
+            t = (y & 1) << 1;
 
-		for (x=0 ; x<vid.width ; x++)
-		{
-			if ((x & 3) != t)
-				pbuf[x] = 0;
-		}
+            for (x=0 ; x<vid.width/uiscale ; x++)
+            {
+                if ((x & 3) != t)
+                    for(j=0; j<uiscale ; j++) 
+                        pbuf[x*uiscale+j] = 0;
+            }
+        }
 	}
 
 	S_ExtraUpdate ();
