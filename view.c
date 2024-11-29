@@ -31,6 +31,8 @@ when crossing a water boudnary.
 
 */
 
+extern int uiscale;
+
 cvar_t		lcd_x = {"lcd_x","0"};
 cvar_t		lcd_yaw = {"lcd_yaw","0"};
 
@@ -1055,8 +1057,10 @@ void V_RenderView (void)
 
 #ifndef GLQUAKE
 	if (crosshair.value)
-		Draw_Character (scr_vrect.x + scr_vrect.width/2 + cl_crossx.value, 
-			scr_vrect.y + scr_vrect.height/2 + cl_crossy.value, '+');
+		Draw_CharacterScaled (scr_vrect.x + scr_vrect.width/2 - (uiscale<<2) + cl_crossx.value, 
+			scr_vrect.y + scr_vrect.height/2 + cl_crossy.value, '+', uiscale);
+		//Draw_CharacterScaled (scr_vrect.x + scr_vrect.width/2 + cl_crossx.value, 
+		//	scr_vrect.y + scr_vrect.height/2 + cl_crossy.value, '+', uiscale);
 #endif
 		
 }
