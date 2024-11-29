@@ -143,7 +143,7 @@ void SCR_DrawCenterString (void)
 	if (scr_center_lines <= 4)
 		y = vid.height*0.35;
 	else
-		y = 48;
+		y = 48*uiscale;
 
 	do	
 	{
@@ -151,15 +151,15 @@ void SCR_DrawCenterString (void)
 		for (l=0 ; l<40 ; l++)
 			if (start[l] == '\n' || !start[l])
 				break;
-		x = (vid.width - l*8)/2;
-		for (j=0 ; j<l ; j++, x+=8)
+		x = (vid.width - l*8*uiscale)/2;
+		for (j=0 ; j<l ; j++, x+=8*uiscale)
 		{
-			Draw_Character (x, y, start[j]);	
+			Draw_CharacterScaled (x, y, start[j], uiscale);	
 			if (!remaining--)
 				return;
 		}
 			
-		y += 8;
+		y += 8*uiscale;
 
 		while (*start && *start != '\n')
 			start++;
@@ -721,11 +721,11 @@ void SCR_DrawNotifyString (void)
 		for (l=0 ; l<40 ; l++)
 			if (start[l] == '\n' || !start[l])
 				break;
-		x = (vid.width - l*8)/2;
-		for (j=0 ; j<l ; j++, x+=8)
-			Draw_Character (x, y, start[j]);	
+		x = (vid.width - l*8*uiscale)/2;
+		for (j=0 ; j<l ; j++, x+=8*uiscale)
+			Draw_CharacterScaled (x, y, start[j], uiscale);	
 			
-		y += 8;
+		y += 8*uiscale;
 
 		while (*start && *start != '\n')
 			start++;

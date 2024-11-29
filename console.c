@@ -28,6 +28,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <fcntl.h>
 #include "quakedef.h"
 
+extern int uiscale;
+
 int 		con_linewidth;
 
 float		con_cursorspeed = 4;
@@ -152,6 +154,7 @@ If the line width has changed, reformat the buffer.
 */
 void Con_CheckResize (void)
 {
+    // TODO make this work with uiscale properly
 	int		i, j, width, oldwidth, oldtotallines, numlines, numchars;
 	char	tbuf[CON_TEXTSIZE];
 
@@ -508,6 +511,7 @@ void Con_DrawInput (void)
 	for (i=key_linepos+1 ; i< con_linewidth ; i++)
 		text[i] = ' ';
 		
+// TODO this should work properly with correctly calculated con_linewidth
 //	prestep if horizontally scrolling
 	if (key_linepos >= con_linewidth)
 		text += 1 + key_linepos - con_linewidth;
@@ -516,7 +520,7 @@ void Con_DrawInput (void)
 	y = con_vislines-16;
 
 	for (i=0 ; i<con_linewidth ; i++)
-		Draw_Character ( (i+1)<<3, con_vislines - 16, text[i]);
+		Draw_CharacterScaled ( ((i+1)<<3)*uiscale, con_vislines - 16*uiscale, text[i], uiscale);
 
 // remove cursor
 	key_lines[edit_line][key_linepos] = 0;
@@ -555,7 +559,7 @@ void Con_DrawNotify (void)
 		scr_copytop = 1;
 
 		for (x = 0 ; x < con_linewidth ; x++)
-			Draw_Character ( (x+1)<<3, v, text[x]);
+			Draw_CharacterScaled ( ((x+1)<<3)*uiscale, v*uiscale, text[x], uiscale);
 
 		v += 8;
 	}
@@ -568,14 +572,14 @@ void Con_DrawNotify (void)
 	
 		x = 0;
 		
-		Draw_String (8, v, "say:");
+		Draw_StringScaled (8*uiscale, v*uiscale, "say: ", uiscale);
 		while(chat_buffer[x])
 		{
-			Draw_Character ( (x+5)<<3, v, chat_buffer[x]);
+			Draw_CharacterScaled ( ((x+5)<<3)*uiscale, v*uiscale, chat_buffer[x], uiscale);
 			x++;
 		}
-		Draw_Character ( (x+5)<<3, v, 10+((int)(realtime*con_cursorspeed)&1));
-		v += 8;
+		Draw_CharacterScaled ( ((x+5)<<3)*uiscale, v*uiscale, 10+((int)(realtime*con_cursorspeed)&1), uiscale);
+		v += 8*uiscale;
 	}
 	
 	if (v > con_notifylines)
@@ -606,10 +610,10 @@ void Con_DrawConsole (int lines, qboolean drawinput)
 // draw the text
 	con_vislines = lines;
 
-	rows = (lines-16)>>3;		// rows of text to draw
-	y = lines - 16 - (rows<<3);	// may start slightly negative
+	rows = ((lines-16)>>3)*uiscale;		// rows of text to draw
+	y = lines - 16*uiscale - (rows<<3)*uiscale;	// may start slightly negative
 
-	for (i= con_current - rows + 1 ; i<=con_current ; i++, y+=8 )
+	for (i= con_current - rows + 1 ; i<=con_current ; i++, y+=8*uiscale )
 	{
 		j = i - con_backscroll;
 		if (j<0)
@@ -617,7 +621,7 @@ void Con_DrawConsole (int lines, qboolean drawinput)
 		text = con_text + (j % con_totallines)*con_linewidth;
 
 		for (x=0 ; x<con_linewidth ; x++)
-			Draw_Character ( (x+1)<<3, y, text[x]);
+			Draw_CharacterScaled ( ((x+1)<<3)*uiscale, y, text[x], uiscale);
 	}
 
 // draw the input prompt, user text, and cursor if desired

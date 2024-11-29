@@ -301,11 +301,10 @@ Sbar_DrawString
 */
 void Sbar_DrawString (int x, int y, char *str)
 {
-    return;
 	if (cl.gametype == GAME_DEATHMATCH)
-		Draw_String (x /*+ ((vid.width - 320)>>1)*/, y+ vid.height-SBAR_HEIGHT, str);
+		Draw_StringScaled (x*uiscale /*+ ((vid.width - 320)>>1)*/, y*uiscale+ (vid.height-SBAR_HEIGHT*uiscale), str, uiscale);
 	else
-		Draw_String (x + ((vid.width - 320)>>1), y+ vid.height-SBAR_HEIGHT, str);
+		Draw_StringScaled (x*uiscale + ((vid.width - 320*uiscale)>>1), y*uiscale+ (vid.height-SBAR_HEIGHT*uiscale), str, uiscale);
 }
 
 /*
@@ -1154,7 +1153,7 @@ void Sbar_DeathmatchOverlay (void)
 #endif
 
 	// draw name
-		Draw_String (x+64, y, s->name);
+		Draw_StringScaled (x+64*uiscale, y, s->name, uiscale);
 
 		y += 10;
 	}
@@ -1256,7 +1255,7 @@ void Sbar_MiniDeathmatchOverlay (void)
 #endif
 
 	// draw name
-		Draw_String (x+48, y, s->name);
+		Draw_StringScaled (x+48*uiscale, y, s->name, uiscale);
 
 		y += 8;
 	}
@@ -1323,5 +1322,5 @@ void Sbar_FinaleOverlay (void)
 	scr_copyeverything = 1;
 
 	pic = Draw_CachePic ("gfx/finale.lmp");
-	Draw_TransPic ( (vid.width-pic->width)/2, 16, pic);
+	Draw_TransPicScaled ( (vid.width-(pic->width)*uiscale)/2, 16*uiscale, pic, uiscale);
 }
