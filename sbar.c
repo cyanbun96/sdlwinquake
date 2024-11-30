@@ -780,10 +780,10 @@ void Sbar_DrawFrags (void)
 
 	x = 23;
 	if (cl.gametype == GAME_DEATHMATCH)
-		xofs = 0;
+		xofs = uiscale - 1; // nudge a bit to the right on higher scales
 	else
 		xofs = (vid.width - 320)>>1;
-	y = vid.height - SBAR_HEIGHT - 23;
+	y = vid.height - SBAR_HEIGHT*uiscale - 23*uiscale;
 
 	for (i=0 ; i<l ; i++)
 	{
@@ -798,8 +798,8 @@ void Sbar_DrawFrags (void)
 		top = Sbar_ColorForMap (top);
 		bottom = Sbar_ColorForMap (bottom);
 
-		Draw_Fill (xofs + x*8 + 10, y, 28, 4, top);
-		Draw_Fill (xofs + x*8 + 10, y+4, 28, 3, bottom);
+		Draw_Fill (xofs + x*8*uiscale + 10*uiscale, y, 28*uiscale, 4*uiscale, top);
+		Draw_Fill (xofs + x*8*uiscale + 10*uiscale, y+4*uiscale, 28*uiscale, 3*uiscale, bottom);
 
 	// draw number
 		f = s->frags;
@@ -811,8 +811,8 @@ void Sbar_DrawFrags (void)
 
 		if (k == cl.viewentity - 1)
 		{
-			Sbar_DrawCharacter (x*8+2, -24, 16);
-			Sbar_DrawCharacter ( (x+4)*8-4, -24, 17);
+			Sbar_DrawCharacter (x*8+2+(uiscale-1)*2, -24, 16);
+			Sbar_DrawCharacter ( (x+4)*8-4+(uiscale-1)*2, -24, 17);
 		}
 		x+=4;
 	}
@@ -1105,8 +1105,8 @@ void Sbar_DeathmatchOverlay (void)
 // draw the text
 	l = scoreboardlines;
 
-	x = 80 + ((vid.width - 320)>>1);
-	y = 40;
+	x = 80*uiscale + ((vid.width - 320*uiscale)>>1);
+	y = 40*uiscale;
 	for (i=0 ; i<l ; i++)
 	{
 		k = fragsort[i];
@@ -1120,19 +1120,19 @@ void Sbar_DeathmatchOverlay (void)
 		top = Sbar_ColorForMap (top);
 		bottom = Sbar_ColorForMap (bottom);
 
-		Draw_Fill ( x, y, 40, 4, top);
-		Draw_Fill ( x, y+4, 40, 4, bottom);
+		Draw_Fill ( x, y, 40*uiscale, 4*uiscale, top);
+		Draw_Fill ( x, y+4*uiscale, 40*uiscale, 4*uiscale, bottom);
 
 	// draw number
 		f = s->frags;
 		sprintf (num, "%3i",f);
 
-		Draw_Character ( x+8 , y, num[0]);
-		Draw_Character ( x+16 , y, num[1]);
-		Draw_Character ( x+24 , y, num[2]);
+		Draw_CharacterScaled ( x+8*uiscale , y, num[0], uiscale);
+		Draw_CharacterScaled ( x+16*uiscale , y, num[1], uiscale);
+		Draw_CharacterScaled ( x+24*uiscale , y, num[2], uiscale);
 
 		if (k == cl.viewentity - 1)
-			Draw_Character ( x - 8, y, 12);
+			Draw_CharacterScaled ( x - 8*uiscale, y, 12, uiscale);
 
 #if 0
 {
@@ -1155,7 +1155,7 @@ void Sbar_DeathmatchOverlay (void)
 	// draw name
 		Draw_StringScaled (x+64*uiscale, y, s->name, uiscale);
 
-		y += 10;
+		y += 10*uiscale;
 	}
 }
 
@@ -1175,7 +1175,7 @@ void Sbar_MiniDeathmatchOverlay (void)
 	scoreboard_t	*s;
 	int				numlines;
 
-	if (vid.width < 512 || !sb_lines)
+	if (vid.width < 512 || !sb_lines || uiscale > 1)
 		return;
 
 	scr_copyeverything = 1;
@@ -1206,7 +1206,7 @@ void Sbar_MiniDeathmatchOverlay (void)
     if (i < 0)
             i = 0;
 
-	x = 324;
+	x = 324*uiscale;
 	for (/* */; i < scoreboardlines && y < vid.height - 8 ; i++)
 	{
 		k = fragsort[i];
@@ -1227,13 +1227,13 @@ void Sbar_MiniDeathmatchOverlay (void)
 		f = s->frags;
 		sprintf (num, "%3i",f);
 
-		Draw_Character ( x+8 , y, num[0]);
-		Draw_Character ( x+16 , y, num[1]);
-		Draw_Character ( x+24 , y, num[2]);
+		Draw_CharacterScaled ( x+8 , y, num[0], uiscale);
+		Draw_CharacterScaled ( x+16 , y, num[1], uiscale);
+		Draw_CharacterScaled ( x+24 , y, num[2], uiscale);
 
 		if (k == cl.viewentity - 1) {
-			Draw_Character ( x, y, 16);
-			Draw_Character ( x + 32, y, 17);
+			Draw_CharacterScaled ( x, y, 16, uiscale);
+			Draw_CharacterScaled ( x + 32, y, 17, uiscale);
 		}
 
 #if 0

@@ -525,6 +525,14 @@ void Sys_SendKeyEvents(void)
                    case SDLK_F12: sym = K_F12; break;
                    //case SDLK_BREAK:
                    case SDLK_PAUSE: sym = K_PAUSE; break;
+
+                    // CyanBun96: hardcoded vim keybinds
+                    // to be made less hardcoded, maybe
+                   case SDLK_h: sym = K_LEFTARROW; break;
+                   case SDLK_j: sym = K_DOWNARROW; break;
+                   case SDLK_k: sym = K_UPARROW; break;
+                   case SDLK_l: sym = K_RIGHTARROW; break;
+
                    case SDLK_UP: sym = K_UPARROW; break;
                    case SDLK_DOWN: sym = K_DOWNARROW; break;
                    case SDLK_RIGHT: sym = K_RIGHTARROW; break;
