@@ -46,7 +46,7 @@ int VID_AllocBuffers(int width, int height);
 
 void VID_MenuDraw (void);
 void VID_MenuKey (int key);
-// No support for option menus TODO
+
 void (*vid_menudrawfn)(void) = VID_MenuDraw;
 void (*vid_menukeyfn)(int key) = VID_MenuKey;
 
@@ -112,6 +112,7 @@ typedef struct
     int     width;
 } modedesc_t;
 
+int         force_mode_set = 0;
 int         vid_modenum = 0;
 int         vid_testingmode, vid_realmode;
 double      vid_testendtime;
@@ -130,8 +131,23 @@ static modedesc_t   modedescs[MAX_MODEDESCS];
 
 
 
+int VID_DetermineMode ()
+{
+    int win = !(SDLWindowFlags & (SDL_WINDOW_FULLSCREEN
+                     | SDL_WINDOW_FULLSCREEN_DESKTOP));
+         if(win  && vid.width == 320 && vid.height == 240) return 0;
+    else if(win  && vid.width == 640 && vid.height == 480) return 1;
+    else if(win  && vid.width == 800 && vid.height == 600) return 2;
+    else if(!win && vid.width == 320 && vid.height == 200) return 3;
+    else if(!win && vid.width == 320 && vid.height == 240) return 4;
+    else if(!win && vid.width == 640 && vid.height == 350) return 5;
+    else if(!win && vid.width == 640 && vid.height == 400) return 6;
+    else if(!win && vid.width == 640 && vid.height == 480) return 7;
+    else if(!win && vid.width == 800 && vid.height == 600) return 8;
+    return -1;
+}
 
-void    VID_SetPalette (unsigned char *palette)
+void VID_SetPalette (unsigned char *palette)
 {
 	int		i;
 	SDL_Color colors[256];
@@ -199,6 +215,7 @@ void VID_UnlockBuffer (void)
 void    VID_Init (unsigned char *palette)
 {
     Cvar_RegisterVariable (&_windowed_mouse);
+    Cvar_RegisterVariable (&_vid_default_mode_win);
     Cvar_RegisterVariable (&vid_mode);
     Cvar_RegisterVariable (&scr_uiscale);
 
@@ -209,15 +226,29 @@ void    VID_Init (unsigned char *palette)
     Uint16 video_w, video_h;
     Uint32 flags;
     char caption[50];
+    int winmode;
 
     // Load the SDL library
     if(SDL_Init(SDL_INIT_VIDEO) < 0)
         Sys_Error("VID: Couldn't load SDL: %s", SDL_GetError());
     // Set up display mode (width and height)
-    vid.width = BASEWIDTH;
-    vid.height = BASEHEIGHT;
     vid.maxwarpwidth = WARP_WIDTH;
     vid.maxwarpheight = WARP_HEIGHT;
+
+    // CyanBun96: this mess could probably fit in an array.
+    // I mean it shouldn't be this way at all, but an array would be less bad.
+    switch ((int)_vid_default_mode_win.value) {
+        case 0: vid.width = 320; vid.height = 240; winmode = 1; break;
+        case 1: vid.width = 640; vid.height = 480; winmode = 1; break;
+        case 2: vid.width = 800; vid.height = 600; winmode = 1; break;
+        case 3: vid.width = 320; vid.height = 200; winmode = 0; break;
+        case 4: vid.width = 320; vid.height = 240; winmode = 0; break;
+        case 5: vid.width = 640; vid.height = 350; winmode = 0; break;
+        case 6: vid.width = 640; vid.height = 400; winmode = 0; break;
+        case 7: vid.width = 640; vid.height = 480; winmode = 0; break;
+        case 8: vid.width = 800; vid.height = 600; winmode = 0; break;
+        default: vid.width = 320; vid.height = 240; winmode = 0; break;
+    }
 
     // check for command-line window size
     if ((pnum=COM_CheckParm("-winsize")))
@@ -259,13 +290,13 @@ void    VID_Init (unsigned char *palette)
     // can be achieved by passing -fullscreen_desktop and -borderless
     // -fullscreen will try to change the display resolution
 
-    if ( COM_CheckParm ("-fullscreen") )
+    if ( COM_CheckParm ("-fullscreen") || winmode == 0)
         flags |= SDL_WINDOW_FULLSCREEN;
 
     else if ( COM_CheckParm ("-fullscreen_desktop") )
         flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
 
-    if ( COM_CheckParm ("-window") )
+    if ( COM_CheckParm ("-window") || winmode == 1)
         flags &= ~SDL_WINDOW_FULLSCREEN;
     
     if ( COM_CheckParm ("-borderless") )
@@ -276,7 +307,8 @@ void    VID_Init (unsigned char *palette)
     else
         force_old_render = 0;
 
-    if ((pnum=COM_CheckParm("-stretchpixels")))
+    if ( COM_CheckParm("-stretchpixels")
+         || vid.height == 200 || vid.height == 400)
         stretchpixels = 1;
     else
         stretchpixels = 0;
@@ -287,24 +319,37 @@ void    VID_Init (unsigned char *palette)
     	//Sys_Error("Maximum Resolution is 1280 width and 1024 height");
     }
     window = SDL_CreateWindow(NULL,
-                                          SDL_WINDOWPOS_CENTERED,
-                                          SDL_WINDOWPOS_CENTERED,
-                                          vid.width, vid.height,
-                                          flags);
-    screen = SDL_CreateRGBSurfaceWithFormat(0, vid.width, vid.height, 8, SDL_PIXELFORMAT_INDEX8);
+                              SDL_WINDOWPOS_CENTERED,
+                              SDL_WINDOWPOS_CENTERED,
+                              vid.width,
+                              vid.height,
+                              flags);
+    screen = SDL_CreateRGBSurfaceWithFormat(0,
+                              vid.width,
+                              vid.height,
+                              8,
+                              SDL_PIXELFORMAT_INDEX8);
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "nearest");
     renderer = SDL_CreateRenderer(window, -1, 0);
     if (!force_old_render) {
-        argbbuffer = SDL_CreateRGBSurfaceWithFormatFrom(
-            NULL, vid.width, vid.height, 0, 0, SDL_PIXELFORMAT_ARGB8888);
+        argbbuffer = SDL_CreateRGBSurfaceWithFormatFrom(NULL,
+                              vid.width,
+                              vid.height,
+                              0,
+                              0,
+                              SDL_PIXELFORMAT_ARGB8888);
         texture = SDL_CreateTexture(renderer,
-                                    SDL_PIXELFORMAT_ARGB8888,
-                                    SDL_TEXTUREACCESS_STREAMING,
-                                    vid.width, vid.height);
+                              SDL_PIXELFORMAT_ARGB8888,
+                              SDL_TEXTUREACCESS_STREAMING,
+                              vid.width,
+                              vid.height);
     }
     else {
-        scaleBuffer = SDL_CreateRGBSurfaceWithFormat(
-            0, vid.width, vid.height, 8, SDL_GetWindowPixelFormat(window));
+        scaleBuffer = SDL_CreateRGBSurfaceWithFormat(0,
+                              vid.width,
+                              vid.height,
+                              8,
+                              SDL_GetWindowPixelFormat(window));
     }
     windowSurface = SDL_GetWindowSurface(window);
 
@@ -338,6 +383,10 @@ void    VID_Init (unsigned char *palette)
     SDL_ShowCursor(0);
     
     vid_initialized = true;
+
+    vid_modenum = VID_DetermineMode();
+    if (vid_modenum < 0)
+        Con_Printf("WARNING: non-standard video mode\n");
 }
 
 void    VID_Shutdown (void)
@@ -357,8 +406,8 @@ void    VID_Shutdown (void)
 
 void    VID_CalcScreenDimensions ()
 {
-    uiscale = (vid.width / 320); // TODO adjust the cvar too
-    printf("UI Scale %d\n", uiscale);
+    uiscale = (vid.width / 320);
+    Cvar_SetValue ("scr_uiscale", uiscale);
 
     // Scaling code, courtesy of ChatGPT
     // Original, pre-scale screen size
@@ -447,6 +496,26 @@ void    VID_Update (vrect_t *rects)
         SDL_RenderClear(renderer);
         SDL_RenderCopy(renderer, texture, NULL, &destRect);
         SDL_RenderPresent(renderer);
+    }
+
+    if (vid_testingmode)
+    {
+        if (realtime >= vid_testendtime)
+        {
+            VID_SetMode (vid_realmode, vid_curpal);
+            vid_testingmode = 0;
+        }
+    }
+    else
+    {
+        if ((int)vid_mode.value != vid_realmode)
+        {
+            VID_SetMode ((int)vid_mode.value, vid_curpal);
+            Cvar_SetValue ("vid_mode", (float)vid_modenum);
+                                // so if mode set fails, we don't keep on
+                                //  trying to set that mode
+            vid_realmode = vid_modenum;
+        }
     }
 }
 
@@ -922,7 +991,6 @@ int VID_SetMode (int modenum, unsigned char *palette)
         }
     }
 
-    int force_mode_set = 1;
     if (!force_mode_set && (modenum == vid_modenum))
         return true;
 
@@ -942,6 +1010,7 @@ int VID_SetMode (int modenum, unsigned char *palette)
     VID_SetPalette(palette);
     vid_modenum = modenum;
     Cvar_SetValue ("vid_mode", (float)vid_modenum);
+    return true;
 }
 
 /*
@@ -1211,25 +1280,24 @@ void VID_MenuKey (int key)
         VID_SetMode (vid_line, vid_curpal);
         break;
 
-    case 'T': //TODO
+    case 'T':
     case 't':
         S_LocalSound ("misc/menu1.wav");
     // have to set this before setting the mode because WM_PAINT
     // happens during the mode set and does a VID_Update, which
     // checks vid_testingmode
-        /*vid_testingmode = 1;
+        vid_testingmode = 1;
         vid_testendtime = realtime + 5.0;
 
         if (!VID_SetMode (modedescs[vid_line].modenum, vid_curpal))
         {
             vid_testingmode = 0;
-        }*/
+        }
         break;
 
-    case 'D': //TODO
+    case 'D':
     case 'd':
         S_LocalSound ("misc/menu1.wav");
-        //firstupdate = 0;
         Cvar_SetValue ("_vid_default_mode_win", vid_modenum);
         break;
 
