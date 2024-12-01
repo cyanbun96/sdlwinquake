@@ -130,6 +130,47 @@ char desclist[20][13];
 static modedesc_t   modedescs[MAX_MODEDESCS];
 
 
+int VID_GetDefaultMode() {
+    // CyanBun96: _vid_default_mode_win gets read from config.cfg only after
+    // video is initialized. To avoid creating a window and textures just to
+    // destroy them right away and only then replace them with the valid ones
+    // this function reads the default mode independently of cvar status
+
+    FILE *file;
+    char line[256];
+    int vid_default_mode = -1;
+
+    file = fopen("id1/config.cfg", "r");
+    if (!file) {
+        printf("Failed to open id1/config.cfg");
+        return -2;
+    }
+
+    while (fgets(line, sizeof(line), file)) {
+        char *key = "_vid_default_mode_win";
+        char *found = strstr(line, key);
+        if (found) {
+            char *start = strchr(found, '"');
+            if (start) {
+                char *end = strchr(start + 1, '"');
+                if (end) {
+                    *end = '\0';
+                    vid_default_mode = atoi(start + 1);
+                    break;
+                }
+            }
+        }
+    }
+
+    fclose(file);
+
+    if (vid_default_mode != -1)
+        printf("_vid_default_mode_win: %d\n", vid_default_mode);
+    else
+        printf("_vid_default_mode_win not found in id1/config.cfg\n");
+
+    return vid_default_mode;
+}
 
 int VID_DetermineMode ()
 {
@@ -214,11 +255,6 @@ void VID_UnlockBuffer (void)
 
 void    VID_Init (unsigned char *palette)
 {
-    Cvar_RegisterVariable (&_windowed_mouse);
-    Cvar_RegisterVariable (&_vid_default_mode_win);
-    Cvar_RegisterVariable (&vid_mode);
-    Cvar_RegisterVariable (&scr_uiscale);
-
     int pnum, chunk;
     byte *cache;
     int cachesize;
@@ -227,6 +263,13 @@ void    VID_Init (unsigned char *palette)
     Uint32 flags;
     char caption[50];
     int winmode;
+    int defmode;
+    int realwidth;
+
+    Cvar_RegisterVariable (&_windowed_mouse);
+    Cvar_RegisterVariable (&_vid_default_mode_win);
+    Cvar_RegisterVariable (&vid_mode);
+    Cvar_RegisterVariable (&scr_uiscale);
 
     // Load the SDL library
     if(SDL_Init(SDL_INIT_VIDEO) < 0)
@@ -235,9 +278,10 @@ void    VID_Init (unsigned char *palette)
     vid.maxwarpwidth = WARP_WIDTH;
     vid.maxwarpheight = WARP_HEIGHT;
 
+    defmode = VID_GetDefaultMode();
     // CyanBun96: this mess could probably fit in an array.
     // I mean it shouldn't be this way at all, but an array would be less bad.
-    switch ((int)_vid_default_mode_win.value) {
+    switch (defmode) {
         case 0: vid.width = 320; vid.height = 240; winmode = 1; break;
         case 1: vid.width = 640; vid.height = 480; winmode = 1; break;
         case 2: vid.width = 800; vid.height = 600; winmode = 1; break;
@@ -307,21 +351,27 @@ void    VID_Init (unsigned char *palette)
     else
         force_old_render = 0;
 
-    if ( COM_CheckParm("-stretchpixels")
-         || vid.height == 200 || vid.height == 400)
-        stretchpixels = 1;
-    else
-        stretchpixels = 0;
-
     if (vid.width > 1280 || vid.height > 1024)
     {
         Con_Printf("WARNING: vanilla maximum resolution is 1280x1024\n");
     	//Sys_Error("Maximum Resolution is 1280 width and 1024 height");
     }
+
+    if ( COM_CheckParm("-stretchpixels")
+         || vid.height == 200 || vid.height == 400) {
+        stretchpixels = 1;
+        realwidth = vid.width - (vid.width - vid.width / 1.2) * stretchpixels;
+        printf("Actual width: %d\n", realwidth);
+    }
+    else {
+        stretchpixels = 0;
+        realwidth = vid.width;
+    }
+
     window = SDL_CreateWindow(NULL,
                               SDL_WINDOWPOS_CENTERED,
                               SDL_WINDOWPOS_CENTERED,
-                              vid.width,
+                              realwidth,
                               vid.height,
                               flags);
     screen = SDL_CreateRGBSurfaceWithFormat(0,
@@ -356,7 +406,6 @@ void    VID_Init (unsigned char *palette)
     if (!screen)
         Sys_Error("VID: Couldn't set video mode: %s\n", SDL_GetError());
     VID_CalcScreenDimensions();
-    SDL_UpdateWindowSurface(window);
 
     sprintf(caption, "SDL2WinQuake - Version %4.2f", VERSION);
     SDL_SetWindowTitle(window, (const char*)&caption);
@@ -387,6 +436,8 @@ void    VID_Init (unsigned char *palette)
     vid_modenum = VID_DetermineMode();
     if (vid_modenum < 0)
         Con_Printf("WARNING: non-standard video mode\n");
+    else
+        Con_Printf("Detected video mode %d\n", vid_modenum);
 }
 
 void    VID_Shutdown (void)
@@ -496,6 +547,13 @@ void    VID_Update (vrect_t *rects)
         SDL_RenderClear(renderer);
         SDL_RenderCopy(renderer, texture, NULL, &destRect);
         SDL_RenderPresent(renderer);
+    }
+
+    if (uiscale != scr_uiscale.value
+            && vid.width / 320 >= scr_uiscale.value
+            && scr_uiscale.value > 0) {
+        uiscale = scr_uiscale.value;
+        vid.recalc_refdef = 1;
     }
 
     if (vid_testingmode)
