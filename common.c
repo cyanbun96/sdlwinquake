@@ -1766,7 +1766,7 @@ COM_AddGameDirectory -- johnfitz -- modified based on topaz's tutorial
 */
 void COM_AddGameDirectory (char *dir)
 {
-	int i;
+	int i, j;
 	searchpath_t *search;
 	pack_t *pak;
 	char pakfile[MAX_OSPATH];
@@ -1784,8 +1784,16 @@ void COM_AddGameDirectory (char *dir)
 	{
 		sprintf (pakfile, "%s/pak%i.pak", dir, i);
 		pak = COM_LoadPackFile (pakfile);
-		if (!pak)
-			break;
+		if (!pak) {
+            // CyanBun96: capitalize the path and try again
+            for (j = 0; pakfile[j]; j++)
+                if (pakfile[j] >= 'a' && pakfile[j] <= 'z')
+                    pakfile[j] &= 0b11011111;
+            pak = COM_LoadPackFile (pakfile);
+            if (!pak) {
+                break;
+            }
+        }
 		search = Z_Malloc(sizeof(searchpath_t));
 		search->pack = pak;
 		search->next = com_searchpaths;

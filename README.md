@@ -41,11 +41,11 @@ Changes from upstream:
 
 ---Video configuration menu (mostly for show, use -width and -heigth)
 
+-Proper UI scaling
+
 Planned:
 
 -Mouse sensitivity for widescreen resolutions
-
--Proper UI scaling
 
 -Proper higher resolution support
 
