@@ -20,6 +20,7 @@ Uint32 SDLWindowFlags;
 
 int stretchpixels = 0; // 1x1.2 pixels for 8:5 modes
 int uiscale = 1;
+int vimmode = 0;
 
 cvar_t _windowed_mouse = {"_windowed_mouse","0", true};
 
@@ -351,6 +352,8 @@ void    VID_Init (unsigned char *palette)
     else
         force_old_render = 0;
 
+    if ( COM_CheckParm ("-vimmode") )
+        vimmode = 1;
     if (vid.width > 1280 || vid.height > 1024)
     {
         Con_Printf("WARNING: vanilla maximum resolution is 1280x1024\n");
@@ -653,12 +656,11 @@ void Sys_SendKeyEvents(void)
                    //case SDLK_BREAK:
                    case SDLK_PAUSE: sym = K_PAUSE; break;
 
-                    // CyanBun96: hardcoded vim keybinds
-                    // to be made less hardcoded, maybe
-                   case SDLK_h: sym = K_LEFTARROW; break;
-                   case SDLK_j: sym = K_DOWNARROW; break;
-                   case SDLK_k: sym = K_UPARROW; break;
-                   case SDLK_l: sym = K_RIGHTARROW; break;
+                   // CyanBun96: vim-like keybinds that work in menus
+                   case SDLK_h: sym = vimmode?K_LEFTARROW:'h'; break;
+                   case SDLK_j: sym = vimmode?K_DOWNARROW:'j'; break;
+                   case SDLK_k: sym = vimmode?K_UPARROW:'k'; break;
+                   case SDLK_l: sym = vimmode?K_RIGHTARROW:'l'; break;
 
                    case SDLK_UP: sym = K_UPARROW; break;
                    case SDLK_DOWN: sym = K_DOWNARROW; break;

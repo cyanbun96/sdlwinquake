@@ -7,6 +7,7 @@ Requires SDL2.
 Build on Linux with ./autogen.sh && ./configure && make
 Other OSs not tested yet.
 
+
 Changes from upstream:
 
 -WIP SDL2 port
@@ -29,11 +30,11 @@ Changes from upstream:
 
 ------Use the new -forceoldrender flag to disable
 
--Changed audio rate to 11025 for more muffled WinQuake sound
 
 -Non-square pixels for 320x200 and 640x400 modes
 
 ---Can be forced on other modes with -stretchpixels
+
 
 -General feature parity with the original WinQuake
 
@@ -41,7 +42,19 @@ Changes from upstream:
 
 ---Video configuration menu (mostly for show, use -width and -heigth)
 
+
 -Proper UI scaling
+
+
+-Advanced audio configuration
+
+---The default audio rate is 11025 for more muffled WinQuake sound
+
+---New flags -sndsamples and -sndpitch (try -sndpitch 5 or 15)
+
+
+-vim-like keybinds that work in menus, enable with -vimmode flag
+
 
 Planned:
 
@@ -49,11 +62,12 @@ Planned:
 
 -Proper higher resolution support
 
--Audio rate configuration
-
 -General feature parity with the original WinQuake
 
+
 Maybe:
+
+-A hidden/optional "Advanced options" menu for all the new stuff
 
 -Brown menu background filter, DOS Quake-style
 

@@ -23,12 +23,18 @@ static void paint_audio(void *unused, Uint8 *stream, int len)
 
 qboolean SNDDMA_Init(void)
 {
+    int i;
 	SDL_AudioSpec desired, obtained;
 
 	snd_inited = 0;
 
 	/* Set up the desired format */
-	desired.freq = desired_speed;
+    if ((i = COM_CheckParm("-sndspeed")) != 0)
+        desired_speed = atoi(com_argv[i+1]);
+    desired.freq = desired_speed;
+
+    if ((i = COM_CheckParm("-sndbits")) != 0)
+        desired_bits = atoi(com_argv[i+1]);
 	switch (desired_bits) {
 		case 8:
 			desired.format = AUDIO_U8;
@@ -44,8 +50,18 @@ qboolean SNDDMA_Init(void)
 								desired_bits);
 			return 0;
 	}
-	desired.channels = 2;
+
+    if ((i = COM_CheckParm("-sndmono")) != 0) {
+        desired.channels = 1; // sounds busted, FIXME
+    }
+    else if ((i = COM_CheckParm("-sndstereo")) != 0)
+        desired.channels = 2;
+    else desired.channels = 2;
+
 	desired.samples = 512;
+    if ((i = COM_CheckParm("-sndsamples")) != 0)
+        desired.samples = atoi(com_argv[i+1]);
+
 	desired.callback = paint_audio;
 
 	/* Open the audio device */
@@ -92,6 +108,9 @@ qboolean SNDDMA_Init(void)
 	shm->samplepos = 0;
 	shm->submission_chunk = 1;
 	shm->buffer = NULL;
+
+    if ((i = COM_CheckParm("-sndpitch")) != 0)
+        shm->speed *= ((float)atoi(com_argv[i+1])/10);
 
 	snd_inited = 1;
 	return 1;
