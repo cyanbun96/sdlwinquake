@@ -335,13 +335,15 @@ void    VID_Init (unsigned char *palette)
     // can be achieved by passing -fullscreen_desktop and -borderless
     // -fullscreen will try to change the display resolution
 
-    if ( COM_CheckParm ("-fullscreen") || winmode == 0)
+    if ( COM_CheckParm ("-fullscreen") )
         flags |= SDL_WINDOW_FULLSCREEN;
-
     else if ( COM_CheckParm ("-fullscreen_desktop") )
         flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
-
-    if ( COM_CheckParm ("-window") || winmode == 1)
+    else if ( COM_CheckParm ("-window") )
+        flags &= ~SDL_WINDOW_FULLSCREEN;
+    else if ( winmode == 0 )
+        flags |= SDL_WINDOW_FULLSCREEN;
+    else if ( winmode == 1 )
         flags &= ~SDL_WINDOW_FULLSCREEN;
     
     if ( COM_CheckParm ("-borderless") )
