@@ -147,6 +147,9 @@ void Draw_CharacterScaled (int x, int y, int num, int scale)
 	if (y <= -8)
 		return;			// totally off screen
 
+    if (y >= (signed int)(vid.height - 8*scale))
+        return; // don't draw past the bottom of the screen
+
 #ifdef PARANOID
 	if (y > vid.height - 8 || x < 0 || x > vid.width - 8)
 		Sys_Error ("Con_DrawCharacter: (%i, %i)", x, y);
@@ -166,7 +169,6 @@ void Draw_CharacterScaled (int x, int y, int num, int scale)
 	}
 	else
 		drawline = 8;
-
 
 	if (1 || r_pixbytes == 1)
 	{
