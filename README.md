@@ -10,6 +10,7 @@ Other OSs not tested yet.
 
 Changes from upstream:
 
+
 -WIP SDL2 port
 
 ---No SDL1.2 includes
@@ -56,16 +57,17 @@ Changes from upstream:
 -vim-like keybinds that work in menus, enable with -vimmode flag
 
 
+-Mouse sensitivity Y-axis scaling with sensitivityyscale cvar
+
+
 Planned:
 
--Mouse sensitivity for widescreen resolutions
-
--Proper higher resolution support
-
--General feature parity with the original WinQuake
+-Fixing whatever was broken by adding the above
 
 
 Maybe:
+
+-Proper higher resolution support
 
 -A hidden/optional "Advanced options" menu for all the new stuff
 

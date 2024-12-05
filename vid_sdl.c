@@ -80,6 +80,7 @@ cvar_t      vid_window_x = {"vid_window_x", "0", true};
 cvar_t      vid_window_y = {"vid_window_y", "0", true};
 
 cvar_t      scr_uiscale = {"scr_uiscale", "1", true};
+cvar_t      sensitivityyscale = {"sensitivityyscale", "1.0", true};
 
 extern void M_Menu_Options_f (void);
 extern void M_Print (int cx, int cy, char *str);
@@ -271,6 +272,7 @@ void    VID_Init (unsigned char *palette)
     Cvar_RegisterVariable (&_vid_default_mode_win);
     Cvar_RegisterVariable (&vid_mode);
     Cvar_RegisterVariable (&scr_uiscale);
+    Cvar_RegisterVariable (&sensitivityyscale);
 
     // Load the SDL library
     if(SDL_Init(SDL_INIT_VIDEO) < 0)
@@ -819,7 +821,7 @@ void IN_Move (usercmd_t *cmd)
 
     // TODO aspect ratio-based sensitivity
     mouse_x *= sensitivity.value;
-    mouse_y *= sensitivity.value;
+    mouse_y *= sensitivity.value * sensitivityyscale.value;
    
     if ( (in_strafe.state & 1) || (lookstrafe.value && (in_mlook.state & 1) ))
         cmd->sidemove += m_side.value * mouse_x;
