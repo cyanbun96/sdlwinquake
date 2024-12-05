@@ -161,7 +161,7 @@ void Draw_CharacterScaled (int x, int y, int num, int scale)
 	col = num&15;
 	source = draw_chars + (row<<10) + (col<<3);
 
-	if (y < 0)
+	if (y < 0) //TODO doesn't seem to work properly
 	{	// clipped
 		drawline = 8 + y;
 		source -= 128*y;
