@@ -186,23 +186,14 @@ int Sys_FileOpenRead (char *path, int *hndl)
 
 int Sys_FileOpenWrite (char *path)
 {
-	FILE	*f;
-	int		i;
-	
-	i = findhandle ();
-
-	f = fopen(path, "wb");
-	if (!f)
-		Sys_Error ("Error opening %s: %s", path,strerror(errno));
-	sys_handles[i] = f;
-	
-	return i;
+    int fd = openat(AT_FDCWD, path, O_WRONLY|O_CREAT|O_TRUNC, 0666);
+	return fd;
 }
 
 void Sys_FileClose (int handle)
 {
 	if ( handle >= 0 ) {
-		fclose (sys_handles[handle]);
+		close ((int)sys_handles[handle]);
 		sys_handles[handle] = NULL;
 	}
 }
@@ -238,23 +229,9 @@ int Sys_FileRead (int handle, void *dst, int count)
 
 int Sys_FileWrite (int handle, void *src, int count)
 {
-	char *data;
-	int size, done;
-
-	size = 0;
-	if ( handle >= 0 ) {
-		data = src;
-		while ( count > 0 ) {
-			done = fread (data, 1, count, sys_handles[handle]);
-			if ( done == 0 ) {
-				break;
-			}
-			data += done;
-			count -= done;
-			size += done;
-		}
-	}
-	return size;
+	int size;
+    size = write(handle, src, count);
+    return size;
 }
 
 int	Sys_FileTime (char *path)
