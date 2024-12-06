@@ -80,13 +80,13 @@ R_EmitEdge
 void R_EmitEdge (mvertex_t *pv0, mvertex_t *pv1)
 {
 	edge_t	*edge, *pcheck;
-	int		u_check;
-	float	u, u_step;
+	long	u_check;
+	double	u, u_step;
 	vec3_t	local, transformed;
 	float	*world;
-	int		v, v2, ceilv0;
+	long	v, v2, ceilv0;
 	float	scale, lzi0, u0, v0;
-	int		side;
+	long	side;
 
 	if (r_lastvertvalid)
 	{

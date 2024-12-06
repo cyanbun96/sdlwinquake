@@ -15,6 +15,7 @@ sdlquake
 *.kdev*
 autom4*
 TAGS
+tags
 configure
 config.h.in
 aclocal.m4

@@ -52,7 +52,7 @@ int		r_currentkey;
 
 int	current_iv;
 
-int	edge_head_u_shift20, edge_tail_u_shift20;
+long	edge_head_u_shift20, edge_tail_u_shift20;
 
 static void (*pdrawfunc)(void);
 
@@ -300,7 +300,7 @@ R_CleanupSpan
 void R_CleanupSpan ()
 {
 	surf_t	*surf;
-	int		iu;
+	long	iu;
 	espan_t	*span;
 
 // now that we've reached the right edge of the screen, we're done with any
@@ -414,7 +414,7 @@ R_TrailingEdge
 void R_TrailingEdge (surf_t *surf, edge_t *edge)
 {
 	espan_t			*span;
-	int				iu;
+	long			iu;
 
 // don't generate a span if this is an inverted span, with the end
 // edge preceding the start edge (that is, we haven't seen the
@@ -459,7 +459,7 @@ void R_LeadingEdge (edge_t *edge)
 {
 	espan_t			*span;
 	surf_t			*surf, *surf2;
-	int				iu;
+	long			iu;
 	double			fu, newzi, testzi, newzitop, newzibottom;
 
 	if (edge->surfs[1])
@@ -660,7 +660,7 @@ Each surface has a linked list of its visible spans
 */
 void R_ScanEdges (void)
 {
-	int		iv, bottom;
+	long	iv, bottom;
 	byte	basespans[MAXSPANS*sizeof(espan_t)+CACHE_SIZE];
 	espan_t	*basespan_p;
 	surf_t	*s;
@@ -673,7 +673,7 @@ void R_ScanEdges (void)
 
 // clear active edges to just the background edges around the whole screen
 // FIXME: most of this only needs to be set up once
-	edge_head.u = r_refdef.vrect.x << 20;
+	edge_head.u = (long)r_refdef.vrect.x << 20;
 	edge_head_u_shift20 = edge_head.u >> 20;
 	edge_head.u_step = 0;
 	edge_head.prev = NULL;
@@ -681,7 +681,7 @@ void R_ScanEdges (void)
 	edge_head.surfs[0] = 0;
 	edge_head.surfs[1] = 1;
 	
-	edge_tail.u = (r_refdef.vrectright << 20) + 0xFFFFF;
+	edge_tail.u = ((long)r_refdef.vrectright << 20) + 0xFFFFF;
 	edge_tail_u_shift20 = edge_tail.u >> 20;
 	edge_tail.u_step = 0;
 	edge_tail.prev = &edge_head;

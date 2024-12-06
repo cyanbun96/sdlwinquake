@@ -30,8 +30,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define MAXWORKINGVERTS	(MAXVERTS+4)	// max points in an intermediate
 										//  polygon (while processing)
 // !!! if this is changed, it must be changed in d_ifacea.h too !!!
-#define	MAXHEIGHT		1080
-#define	MAXWIDTH		1920
+#define	MAXHEIGHT		8640 // CyanBun96: 16k resolution. futureproofing.
+#define	MAXWIDTH		15360
 #define MAXDIMENSION	((MAXHEIGHT > MAXWIDTH) ? MAXHEIGHT : MAXWIDTH)
 
 #define SIN_BUFFER_SIZE	(MAXDIMENSION+CYCLE)
@@ -71,7 +71,7 @@ extern	entity_t		*currententity;
 // !!! if this is changed, it must be changed in asm_draw.h too !!!
 typedef struct espan_s
 {
-	int				u, v, count;
+	long			u, v, count;
 	struct espan_s	*pnext;
 } espan_t;
 
@@ -83,7 +83,7 @@ typedef struct surf_s
 	struct surf_s	*prev;			// used in r_edge.c for active surf stack
 	struct espan_s	*spans;			// pointer to linked list of spans to draw
 	int			key;				// sorting key (BSP order)
-	int			last_u;				// set during tracing
+	long		last_u;				// set during tracing
 	int			spanstate;			// 0 = not in span
 									// 1 = in span
 									// -1 = in inverted span (end before
@@ -143,8 +143,8 @@ extern int	ubasestep, errorterm, erroradjustup, erroradjustdown;
 // !!! if this is changed, it must be changed in asm_draw.h too !!!
 typedef struct edge_s
 {
-	fixed16_t		u;
-	fixed16_t		u_step;
+	long    		u;
+	long    		u_step;
 	struct edge_s	*prev, *next;
 	unsigned short	surfs[2];
 	struct edge_s	*nextremove;

@@ -32,6 +32,15 @@ Changes from upstream:
 ------Use the new -forceoldrender flag to disable
 
 
+-High resolution support
+
+---Maximum tested is 16K, 2000 times bigger that 320x200
+
+---Defined by MAXHEIGHT and MAXWIDTH in r_shared.h and d_ifacea.h
+
+---Can probably be set higher for billboard gaming
+
+
 -Non-square pixels for 320x200 and 640x400 modes
 
 ---Can be forced on other modes with -stretchpixels
@@ -66,8 +75,6 @@ Planned:
 
 
 Maybe:
-
--Proper higher resolution support
 
 -A hidden/optional "Advanced options" menu for all the new stuff
 
