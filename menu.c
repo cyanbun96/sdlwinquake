@@ -22,6 +22,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 extern cvar_t _windowed_mouse;
 extern int uiscale;
+int drawmousemenu = 0;
+int newoptions = 1;
 
 #ifdef _WIN32
 #include "winquake.h"
@@ -30,7 +32,7 @@ extern int uiscale;
 extern void (*vid_menudrawfn)(void);
 extern void (*vid_menukeyfn)(int key);
 
-enum {m_none, m_main, m_singleplayer, m_load, m_save, m_multiplayer, m_setup, m_net, m_options, m_video, m_keys, m_help, m_quit, m_serialconfig, m_modemconfig, m_lanconfig, m_gameoptions, m_search, m_slist} m_state;
+enum {m_none, m_main, m_singleplayer, m_load, m_save, m_multiplayer, m_setup, m_net, m_options, m_video, m_keys, m_new, m_help, m_quit, m_serialconfig, m_modemconfig, m_lanconfig, m_gameoptions, m_search, m_slist} m_state;
 
 void M_Menu_Main_f (void);
 	void M_Menu_SinglePlayer_f (void);
@@ -42,6 +44,7 @@ void M_Menu_Main_f (void);
 	void M_Menu_Options_f (void);
 		void M_Menu_Keys_f (void);
 		void M_Menu_Video_f (void);
+		void M_Menu_New_f (void);
 	void M_Menu_Help_f (void);
 	void M_Menu_Quit_f (void);
 void M_Menu_SerialConfig_f (void);
@@ -60,6 +63,7 @@ void M_Main_Draw (void);
 		void M_Net_Draw (void);
 	void M_Options_Draw (void);
 		void M_Keys_Draw (void);
+		void M_New_Draw (void);
 		void M_Video_Draw (void);
 	void M_Help_Draw (void);
 	void M_Quit_Draw (void);
@@ -1041,12 +1045,6 @@ again:
 /* OPTIONS MENU */
 
 
-#ifdef _WIN32
-#define	OPTIONS_ITEMS	14
-#else
-#define	OPTIONS_ITEMS	14 // added Use Mouse on non-windows OSs
-#endif
-
 #define	SLIDER_RANGE	10
 
 int		options_cursor;
@@ -1057,10 +1055,13 @@ void M_Menu_Options_f (void)
 	m_state = m_options;
 	m_entersound = true;
 
-    if (options_cursor == 13 &&
-            (SDLWindowFlags & (SDL_WINDOW_FULLSCREEN
-            | SDL_WINDOW_FULLSCREEN_DESKTOP))
-            && !_windowed_mouse.value) {
+    drawmousemenu = !(SDLWindowFlags & (SDL_WINDOW_FULLSCREEN
+            | SDL_WINDOW_FULLSCREEN_DESKTOP));
+
+    if (options_cursor == 13
+            && drawmousemenu
+            && !_windowed_mouse.value
+            && !newoptions) {
         options_cursor = 0;
     }
 }
@@ -1223,13 +1224,16 @@ void M_Options_Draw (void)
 	M_Print (16, 120, "            Lookstrafe");
 	M_DrawCheckbox (220, 120, lookstrafe.value);
 
-	M_Print (16, 128, "         Video Options"); // TODO
+	M_Print (16, 128, "         Video Options");
 
-    if (!(SDLWindowFlags & (SDL_WINDOW_FULLSCREEN
-            | SDL_WINDOW_FULLSCREEN_DESKTOP)))
+    if (drawmousemenu)
     {
         M_Print (16, 136, "             Use Mouse");
         M_DrawCheckbox (220, 136, _windowed_mouse.value);
+    }
+    if (newoptions)
+    {
+        M_Print (16, drawmousemenu?144:136, "           New Options");
     }
 
 // cursor
@@ -1239,6 +1243,8 @@ void M_Options_Draw (void)
 
 void M_Options_Key (int k)
 {
+    drawmousemenu = !(SDLWindowFlags & (SDL_WINDOW_FULLSCREEN
+            | SDL_WINDOW_FULLSCREEN_DESKTOP));
 	switch (k)
 	{
 	case K_ESCAPE:
@@ -1247,38 +1253,44 @@ void M_Options_Key (int k)
 
 	case K_ENTER:
 		m_entersound = true;
-		switch (options_cursor)
-		{
-		case 0:
+        if (options_cursor == 0) {
 			M_Menu_Keys_f ();
-			break;
-		case 1:
+        }
+        else if (options_cursor == 1) {
 			m_state = m_none;
 			Con_ToggleConsole_f ();
-			break;
-		case 2:
+        }
+        else if (options_cursor == 2) {
 			Cbuf_AddText ("exec default.cfg\n");
-			break;
-		case 12:
+        }
+        else if (options_cursor == 12) {
 			M_Menu_Video_f ();
-			break;
-		default:
+        }
+        else if (options_cursor == 13) {
+            if (drawmousemenu)
+                M_AdjustSliders (1);
+            else
+                M_Menu_New_f ();
+        }
+        else if (options_cursor == 14) {
+            M_Menu_New_f ();
+        }
+        else {
 			M_AdjustSliders (1);
-			break;
-		}
+        }
 		return;
 
 	case K_UPARROW:
 		S_LocalSound ("misc/menu1.wav");
 		options_cursor--;
 		if (options_cursor < 0)
-			options_cursor = OPTIONS_ITEMS-1;
+            options_cursor = 12 + (drawmousemenu&1) + (newoptions&1);
 		break;
 
 	case K_DOWNARROW:
 		S_LocalSound ("misc/menu1.wav");
 		options_cursor++;
-		if (options_cursor >= OPTIONS_ITEMS)
+		if (options_cursor >= 13 + (drawmousemenu&1) + (newoptions&1))
 			options_cursor = 0;
 		break;
 
@@ -1290,24 +1302,6 @@ void M_Options_Key (int k)
 		M_AdjustSliders (1);
 		break;
 	}
-
-    if (options_cursor == 12 && vid_menudrawfn == NULL)
-    {
-        if (k == K_UPARROW)
-            options_cursor = 11;
-        else
-            options_cursor = 0;
-    }
-
-    if (options_cursor == 13 &&
-            (SDLWindowFlags & (SDL_WINDOW_FULLSCREEN
-            | SDL_WINDOW_FULLSCREEN_DESKTOP)))
-    {
-        if (k == K_UPARROW)
-            options_cursor = 12;
-        else
-            options_cursor = 0;
-    }
 }
 
 //=============================================================================
@@ -1346,7 +1340,6 @@ void M_Menu_Keys_f (void)
 	m_state = m_keys;
 	m_entersound = true;
 }
-
 
 void M_FindKeysForCommand (char *command, int *twokeys)
 {
@@ -1503,6 +1496,51 @@ void M_Keys_Key (int k)
 		break;
 	}
 }
+
+
+//=============================================================================
+/* NEW MENU */
+
+void M_Menu_New_f (void)
+{
+	key_dest = key_menu;
+	m_state = m_new;
+	m_entersound = true;
+}
+
+void M_New_Draw (void)
+{
+	qpic_t	*p;
+    int new_cursor = 0;
+
+	M_DrawTransPic (16, 4, Draw_CachePic ("gfx/qplaque.lmp") );
+	p = Draw_CachePic ("gfx/p_option.lmp");
+	M_DrawPic ( (320-p->width)/2, 4, p);
+
+    M_Print (16, 32, "                  TODO");
+
+	M_DrawCharacter (200, 32 + new_cursor*8, 12+((int)(realtime*4)&1));
+}
+
+
+void M_New_Key (int k)
+{
+	switch (k)
+	{
+	case K_ESCAPE:
+		M_Menu_Options_f ();
+		break;
+
+	case K_LEFTARROW:
+	case K_UPARROW:
+	case K_DOWNARROW:
+	case K_RIGHTARROW:
+	case K_ENTER:
+    default:
+        M_Menu_Options_f ();
+	}
+}
+
 
 //=============================================================================
 /* VIDEO MENU */
@@ -3026,6 +3064,7 @@ void M_Init (void)
 	Cmd_AddCommand ("menu_options", M_Menu_Options_f);
 	Cmd_AddCommand ("menu_keys", M_Menu_Keys_f);
 	Cmd_AddCommand ("menu_video", M_Menu_Video_f);
+	Cmd_AddCommand ("menu_new", M_Menu_New_f);
 	Cmd_AddCommand ("help", M_Menu_Help_f);
 	Cmd_AddCommand ("menu_quit", M_Menu_Quit_f);
 }
@@ -3094,6 +3133,10 @@ void M_Draw (void)
 
 	case m_keys:
 		M_Keys_Draw ();
+		break;
+
+	case m_new:
+		M_New_Draw ();
 		break;
 
 	case m_video:
@@ -3188,6 +3231,10 @@ void M_Keydown (int key)
 
 	case m_video:
 		M_Video_Key (key);
+		return;
+
+	case m_new:
+		M_New_Key (key);
 		return;
 
 	case m_help:
