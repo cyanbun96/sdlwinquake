@@ -21,7 +21,7 @@ Changes from upstream:
 
 ---Auto-resolution fullscreen with -fullscreen_desktop
 
----Higher resolutions (max is 1920x1080 ATM)
+---Higher resolutions
 
 ---Hardware-accelerated frame > screen rendering
 

@@ -81,6 +81,7 @@ cvar_t      vid_window_y = {"vid_window_y", "0", true};
 
 cvar_t      scr_uiscale = {"scr_uiscale", "1", true};
 cvar_t      sensitivityyscale = {"sensitivityyscale", "1.0", true};
+cvar_t      scr_stretchpixels = {"scr_stretchpixels", "0", true};
 
 extern void M_Menu_Options_f (void);
 extern void M_Print (int cx, int cy, char *str);
@@ -273,6 +274,7 @@ void    VID_Init (unsigned char *palette)
     Cvar_RegisterVariable (&vid_mode);
     Cvar_RegisterVariable (&scr_uiscale);
     Cvar_RegisterVariable (&sensitivityyscale);
+    Cvar_RegisterVariable (&scr_stretchpixels);
 
     // Load the SDL library
     if(SDL_Init(SDL_INIT_VIDEO) < 0)
@@ -367,11 +369,13 @@ void    VID_Init (unsigned char *palette)
     if ( COM_CheckParm("-stretchpixels")
          || vid.height == 200 || vid.height == 400) {
         stretchpixels = 1;
+        scr_stretchpixels.value = 1;
         realwidth = vid.width - (vid.width - vid.width / 1.2) * stretchpixels;
         printf("Actual width: %d\n", realwidth);
     }
     else {
         stretchpixels = 0;
+        scr_stretchpixels.value = 0;
         realwidth = vid.width;
     }
 
@@ -561,6 +565,11 @@ void    VID_Update (vrect_t *rects)
             && scr_uiscale.value > 0) {
         uiscale = scr_uiscale.value;
         vid.recalc_refdef = 1;
+    }
+
+    if (stretchpixels != scr_stretchpixels.value) {
+        stretchpixels = scr_stretchpixels.value;
+        VID_CalcScreenDimensions ();
     }
 
     if (vid_testingmode)

@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 extern cvar_t _windowed_mouse;
 extern cvar_t scr_uiscale;
+extern cvar_t scr_stretchpixels;
 extern int uiscale;
 int drawmousemenu = 0;
 int newoptions = 1;
@@ -1502,6 +1503,8 @@ void M_Keys_Key (int k)
 //=============================================================================
 /* NEW MENU */
 
+int new_cursor;
+
 void M_Menu_New_f (void)
 {
 	key_dest = key_menu;
@@ -1513,8 +1516,8 @@ void M_New_Draw (void)
 {
     float r;
 	qpic_t	*p;
-    int new_cursor = 0;
     char temp[8];
+    
 
 	M_DrawTransPic (16, 4, Draw_CachePic ("gfx/qplaque.lmp") );
 	p = Draw_CachePic ("gfx/p_option.lmp");
@@ -1523,6 +1526,12 @@ void M_New_Draw (void)
     M_Print (16, 32, "           UI Scale");
     sprintf (temp, "x%d\n", (int)scr_uiscale.value);
 	M_Print (220, 32, temp);
+
+    M_Print (16, 40, "             Pixels");
+    if (scr_stretchpixels.value)
+        M_Print (220, 40, "Stretched");
+    else
+        M_Print (220, 40, "Square");
 
 	M_DrawCharacter (200, 32 + new_cursor*8, 12+((int)(realtime*4)&1));
 }
@@ -1537,16 +1546,34 @@ void M_New_Key (int k)
 		break;
 
 	case K_LEFTARROW:
-        if (scr_uiscale.value > 1)
-            scr_uiscale.value--;
+        if (new_cursor == 0 && scr_uiscale.value > 1)
+            Cvar_SetValue ("scr_uiscale", scr_uiscale.value - 1);
+        else if (new_cursor == 1)
+            Cvar_SetValue ("scr_stretchpixels", !scr_stretchpixels.value);
         break;
+
 	case K_UPARROW:
-	case K_DOWNARROW:
-	case K_RIGHTARROW:
-        if (scr_uiscale.value < (vid.width / 320))
-            scr_uiscale.value++;
+        if (new_cursor == 0)
+            new_cursor = 1;
+        else
+            new_cursor--;
         break;
+
+	case K_DOWNARROW:
+        if (new_cursor == 1)
+            new_cursor = 0;
+        else
+            new_cursor++;
+        break;
+
+	case K_RIGHTARROW:
 	case K_ENTER:
+        if (new_cursor == 0 && scr_uiscale.value < (vid.width / 320))
+            Cvar_SetValue ("scr_uiscale", scr_uiscale.value + 1);
+        else if (new_cursor == 1)
+            Cvar_SetValue ("scr_stretchpixels", !scr_stretchpixels.value);
+        break;
+
     default:
         M_Menu_Options_f ();
 	}
