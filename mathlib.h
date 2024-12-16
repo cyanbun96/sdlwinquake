@@ -65,11 +65,16 @@ extern	int nanmask;
 }
 
 // kristian - missing math functions
+// CyanBun96: defined them here to avoid compiler warnings
 #if !defined(max)
-inline int max (int x, int y);
+inline int max(int x, int y) {
+    return (x > y) ? x : y;
+}
 #endif
 #if !defined(min)
-inline int min (int x, int y);
+inline int min(int x, int y) {
+    return (x < y) ? x : y;
+}
 #endif
 // kristian
 
