@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <SDL2/SDL.h>
 
 extern cvar_t _windowed_mouse;
+extern cvar_t scr_uiscale;
 extern int uiscale;
 int drawmousemenu = 0;
 int newoptions = 1;
@@ -1510,14 +1511,18 @@ void M_Menu_New_f (void)
 
 void M_New_Draw (void)
 {
+    float r;
 	qpic_t	*p;
     int new_cursor = 0;
+    char temp[8];
 
 	M_DrawTransPic (16, 4, Draw_CachePic ("gfx/qplaque.lmp") );
 	p = Draw_CachePic ("gfx/p_option.lmp");
 	M_DrawPic ( (320-p->width)/2, 4, p);
 
-    M_Print (16, 32, "                  TODO");
+    M_Print (16, 32, "           UI Scale");
+    sprintf (temp, "x%d\n", (int)scr_uiscale.value);
+	M_Print (220, 32, temp);
 
 	M_DrawCharacter (200, 32 + new_cursor*8, 12+((int)(realtime*4)&1));
 }
@@ -1532,9 +1537,15 @@ void M_New_Key (int k)
 		break;
 
 	case K_LEFTARROW:
+        if (scr_uiscale.value > 1)
+            scr_uiscale.value--;
+        break;
 	case K_UPARROW:
 	case K_DOWNARROW:
 	case K_RIGHTARROW:
+        if (scr_uiscale.value < (vid.width / 320))
+            scr_uiscale.value++;
+        break;
 	case K_ENTER:
     default:
         M_Menu_Options_f ();
