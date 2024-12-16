@@ -23,6 +23,7 @@ int uiscale = 1;
 int vimmode = 0;
 
 cvar_t _windowed_mouse = {"_windowed_mouse","0", true};
+cvar_t newoptions = {"newoptions", "1", true};
 
 viddef_t    vid;                // global video state
 unsigned short  d_8to16table[256];
@@ -275,6 +276,7 @@ void    VID_Init (unsigned char *palette)
     Cvar_RegisterVariable (&scr_uiscale);
     Cvar_RegisterVariable (&sensitivityyscale);
     Cvar_RegisterVariable (&scr_stretchpixels);
+    Cvar_RegisterVariable (&newoptions);
 
     // Load the SDL library
     if(SDL_Init(SDL_INIT_VIDEO) < 0)

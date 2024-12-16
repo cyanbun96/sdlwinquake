@@ -23,9 +23,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 extern cvar_t _windowed_mouse;
 extern cvar_t scr_uiscale;
 extern cvar_t scr_stretchpixels;
+extern cvar_t newoptions;
 extern int uiscale;
 int drawmousemenu = 0;
-int newoptions = 1;
 
 #ifdef _WIN32
 #include "winquake.h"
@@ -1063,7 +1063,7 @@ void M_Menu_Options_f (void)
     if (options_cursor == 13
             && drawmousemenu
             && !_windowed_mouse.value
-            && !newoptions) {
+            && !newoptions.value) {
         options_cursor = 0;
     }
 }
@@ -1233,7 +1233,7 @@ void M_Options_Draw (void)
         M_Print (16, 136, "             Use Mouse");
         M_DrawCheckbox (220, 136, _windowed_mouse.value);
     }
-    if (newoptions)
+    if (newoptions.value)
     {
         M_Print (16, drawmousemenu?144:136, "           New Options");
     }
@@ -1286,13 +1286,13 @@ void M_Options_Key (int k)
 		S_LocalSound ("misc/menu1.wav");
 		options_cursor--;
 		if (options_cursor < 0)
-            options_cursor = 12 + (drawmousemenu&1) + (newoptions&1);
+            options_cursor = 12 + (drawmousemenu&1) + ((int)newoptions.value&1);
 		break;
 
 	case K_DOWNARROW:
 		S_LocalSound ("misc/menu1.wav");
 		options_cursor++;
-		if (options_cursor >= 13 + (drawmousemenu&1) + (newoptions&1))
+		if (options_cursor >= 13 + (drawmousemenu&1) + ((int)newoptions.value&1))
 			options_cursor = 0;
 		break;
 
@@ -1517,32 +1517,46 @@ void M_New_Draw (void)
     float r;
 	qpic_t	*p;
     char temp[8];
-    
+    int xoffset = 0;
 
 	M_DrawTransPic (16, 4, Draw_CachePic ("gfx/qplaque.lmp") );
 	p = Draw_CachePic ("gfx/p_option.lmp");
 	M_DrawPic ( (320-p->width)/2, 4, p);
 
-    M_Print (16, 32, "           UI Scale");
+    M_Print (xoffset, 32, "              UI Scale");
     sprintf (temp, "x%d\n", (int)scr_uiscale.value);
-	M_Print (220, 32, temp);
+	M_Print (xoffset + 204, 32, temp);
 
-    M_Print (16, 40, "             Pixels");
+    M_Print (xoffset, 40, "                Pixels");
     if (scr_stretchpixels.value)
-        M_Print (220, 40, "Stretched");
+        M_Print (xoffset + 204, 40, "Stretched");
     else
-        M_Print (220, 40, "Square");
+        M_Print (xoffset + 204, 40, "Square");
 
-	M_DrawCharacter (200, 32 + new_cursor*8, 12+((int)(realtime*4)&1));
+    M_Print (xoffset, 48, "             This Menu");
+    if (newoptions.value)
+        M_Print (xoffset + 204, 48, "ON");
+    else
+        M_Print (xoffset + 204, 48, "OFF");
+
+    if (new_cursor == 2) {
+        M_Print      (xoffset + 24, 152, "This menu can be enabled/disabled");
+        M_Print      (xoffset + 32, 168, "with the                command");
+        M_PrintWhite (xoffset + 32, 168, "         newoptions 1/0");
+    }
+
+	M_DrawCharacter (xoffset + 192, 32 + new_cursor*8, 12+((int)(realtime*4)&1));
 }
 
 
 void M_New_Key (int k)
 {
+    int newoptionnum = 2; 
 	switch (k)
 	{
 	case K_ESCAPE:
 		M_Menu_Options_f ();
+        options_cursor = 0;
 		break;
 
 	case K_LEFTARROW:
@@ -1550,17 +1564,19 @@ void M_New_Key (int k)
             Cvar_SetValue ("scr_uiscale", scr_uiscale.value - 1);
         else if (new_cursor == 1)
             Cvar_SetValue ("scr_stretchpixels", !scr_stretchpixels.value);
+        else if (new_cursor == 2)
+            Cvar_SetValue ("newoptions", !newoptions.value);
         break;
 
 	case K_UPARROW:
         if (new_cursor == 0)
-            new_cursor = 1;
+            new_cursor = newoptionnum;
         else
             new_cursor--;
         break;
 
 	case K_DOWNARROW:
-        if (new_cursor == 1)
+        if (new_cursor == newoptionnum)
             new_cursor = 0;
         else
             new_cursor++;
@@ -1572,6 +1588,8 @@ void M_New_Key (int k)
             Cvar_SetValue ("scr_uiscale", scr_uiscale.value + 1);
         else if (new_cursor == 1)
             Cvar_SetValue ("scr_stretchpixels", !scr_stretchpixels.value);
+        else if (new_cursor == 2)
+            Cvar_SetValue ("newoptions", !newoptions.value);
         break;
 
     default:
