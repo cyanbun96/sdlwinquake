@@ -24,6 +24,7 @@ extern cvar_t _windowed_mouse;
 extern cvar_t scr_uiscale;
 extern cvar_t scr_stretchpixels;
 extern cvar_t newoptions;
+extern cvar_t sensitivityyscale;
 extern int uiscale;
 int drawmousemenu = 0;
 
@@ -1516,7 +1517,7 @@ void M_New_Draw (void)
 {
     float r;
 	qpic_t	*p;
-    char temp[8];
+    char temp[32];
     int xoffset = 0;
 
 	M_DrawTransPic (16, 4, Draw_CachePic ("gfx/qplaque.lmp") );
@@ -1534,10 +1535,7 @@ void M_New_Draw (void)
         M_Print (xoffset + 204, 40, "Square");
 
     M_Print (xoffset, 48, "             This Menu");
-    if (newoptions.value)
-        M_Print (xoffset + 204, 48, "ON");
-    else
-        M_Print (xoffset + 204, 48, "OFF");
+    M_DrawCheckbox (xoffset + 204, 48, newoptions.value);
 
     if (new_cursor == 2) {
         M_Print      (xoffset + 24, 152, "This menu can be enabled/disabled");
@@ -1545,18 +1543,23 @@ void M_New_Draw (void)
         M_PrintWhite (xoffset + 32, 168, "         newoptions 1/0");
     }
 
+    M_Print (xoffset, 56, "         Y Mouse Speed");
+    sprintf (temp, "%0.1f\n", sensitivityyscale.value);
+	M_Print (xoffset + 204, 56, temp);
+
 	M_DrawCharacter (xoffset + 192, 32 + new_cursor*8, 12+((int)(realtime*4)&1));
 }
 
 
 void M_New_Key (int k)
 {
-    int newoptionnum = 2; 
+    int newoptionnum = 3; 
 	switch (k)
 	{
 	case K_ESCAPE:
 		M_Menu_Options_f ();
-        options_cursor = 0;
+        if (!newoptions.value)
+            options_cursor = 0;
 		break;
 
 	case K_LEFTARROW:
@@ -1566,6 +1569,8 @@ void M_New_Key (int k)
             Cvar_SetValue ("scr_stretchpixels", !scr_stretchpixels.value);
         else if (new_cursor == 2)
             Cvar_SetValue ("newoptions", !newoptions.value);
+        else if (new_cursor == 3 && sensitivityyscale.value >= 0.1)
+            Cvar_SetValue ("sensitivityyscale", sensitivityyscale.value - 0.1);
         break;
 
 	case K_UPARROW:
@@ -1590,6 +1595,8 @@ void M_New_Key (int k)
             Cvar_SetValue ("scr_stretchpixels", !scr_stretchpixels.value);
         else if (new_cursor == 2)
             Cvar_SetValue ("newoptions", !newoptions.value);
+        else if (new_cursor == 3 && sensitivityyscale.value < 10)
+            Cvar_SetValue ("sensitivityyscale", sensitivityyscale.value + 0.1);
         break;
 
     default:
