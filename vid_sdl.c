@@ -471,6 +471,8 @@ void    VID_Shutdown (void)
 void    VID_CalcScreenDimensions ()
 {
     uiscale = (vid.width / 320);
+    if (uiscale * 200 > vid.height)
+        uiscale = 1; // For weird resolutions like 800x200
     Cvar_SetValue ("scr_uiscale", uiscale);
 
     // Scaling code, courtesy of ChatGPT
@@ -957,7 +959,7 @@ int VID_AllocBuffers (int width, int height)
     return true;
 }
 
-int VID_SetVidMode (int modenum, int customw, int customh, unsigned char *palette)
+int VID_SetVidMode (int modenum, int customw, int customh, int customwinmode, unsigned char *palette)
 {
     int newwidth = 320, newheight = 240;
 
@@ -1031,17 +1033,39 @@ int VID_SetVidMode (int modenum, int customw, int customh, unsigned char *palett
     VID_CalcScreenDimensions();
     VID_SetPalette(palette);
 
-    if (modenum <= 2) // windowed modes
-    {
-        SDL_SetWindowFullscreen(window, 0);
-        SDL_SetWindowSize(window, newwidth, newheight);
-        SDL_SetWindowPosition(window,
-                SDL_WINDOWPOS_CENTERED,
-                SDL_WINDOWPOS_CENTERED);
+    if (!customw || !customh) {
+        if (modenum <= 2) // windowed modes
+        {
+            SDL_SetWindowFullscreen(window, 0);
+            SDL_SetWindowSize(window, newwidth, newheight);
+            SDL_SetWindowPosition(window,
+                    SDL_WINDOWPOS_CENTERED,
+                    SDL_WINDOWPOS_CENTERED);
+        }
+        else // fullscreen modes
+        {
+            SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+        }
     }
-    else // fullscreen modes
-    {
-        SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+    else {
+        // CyanBun96: add borderless, maybe?
+        // Real borderless, not just full desktop
+        if (customwinmode == 0)
+        {
+            SDL_SetWindowFullscreen(window, 0);
+            SDL_SetWindowSize(window, newwidth, newheight);
+            SDL_SetWindowPosition(window,
+                    SDL_WINDOWPOS_CENTERED,
+                    SDL_WINDOWPOS_CENTERED);
+        }
+        else if (customwinmode == 1)
+        {
+            SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
+        }
+        else
+        {
+            SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+        }
     }
     return 1;
 }
@@ -1081,11 +1105,11 @@ int VID_SetMode (int modenum, unsigned char *palette)
     else
         original_mode = vid_modenum;
 
-    stat = VID_SetVidMode(modenum, 0, 0, palette);
+    stat = VID_SetVidMode(modenum, 0, 0, 0, palette);
 
     if (!stat)
     {
-        VID_SetVidMode (original_mode, 0, 0, palette);
+        VID_SetVidMode (original_mode, 0, 0, 0, palette);
         return false;
     }
 
