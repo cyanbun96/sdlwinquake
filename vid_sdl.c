@@ -38,7 +38,7 @@ static int	lockcount;
 static qboolean	vid_initialized = false;
 static SDL_Surface *screen;
 static qboolean	palette_changed;
-static unsigned char	vid_curpal[256*3];	/* save for mode changes */
+unsigned char	vid_curpal[256*3];	/* save for mode changes */
 static qboolean mouse_avail;
 static float   mouse_x, mouse_y;
 static int mouse_oldbuttonstate = 0;
@@ -957,28 +957,34 @@ int VID_AllocBuffers (int width, int height)
     return true;
 }
 
-int VID_SetVidMode (int modenum)
+int VID_SetVidMode (int modenum, int customw, int customh, unsigned char *palette)
 {
     int newwidth = 320, newheight = 240;
 
-    // CyanBun96: BEHOLD, The Mother Of All Hardcodes!
-    switch (modenum) {
-        case 0: newwidth = 320; newheight = 240; break;
-        case 1: newwidth = 640; newheight = 480; break;
-        case 2: newwidth = 800; newheight = 600; break;
-        case 3: newwidth = 320; newheight = 200; break;
-        case 4: newwidth = 320; newheight = 240; break;
-        case 5: newwidth = 640; newheight = 350; break;
-        case 6: newwidth = 640; newheight = 400; break;
-        case 7: newwidth = 640; newheight = 480; break;
-        case 8: newwidth = 800; newheight = 600; break;
-        default: return 0;
+    if (customw && customh) {
+        newwidth = customw;
+        newheight = customh;
     }
+    else {
+        // CyanBun96: BEHOLD, The Mother Of All Hardcodes!
+        switch (modenum) {
+            case 0: newwidth = 320; newheight = 240; break;
+            case 1: newwidth = 640; newheight = 480; break;
+            case 2: newwidth = 800; newheight = 600; break;
+            case 3: newwidth = 320; newheight = 200; break;
+            case 4: newwidth = 320; newheight = 240; break;
+            case 5: newwidth = 640; newheight = 350; break;
+            case 6: newwidth = 640; newheight = 400; break;
+            case 7: newwidth = 640; newheight = 480; break;
+            case 8: newwidth = 800; newheight = 600; break;
+            default: return 0;
+        }
 
-    if (modenum == 3 || modenum == 6)
-        stretchpixels = 1;
-    else
-        stretchpixels = 0;
+        if (modenum == 3 || modenum == 6)
+            stretchpixels = 1;
+        else
+            stretchpixels = 0;
+    }
 
     vid.width = newwidth;
     vid.height = newheight;
@@ -1023,6 +1029,7 @@ int VID_SetVidMode (int modenum)
     vid.recalc_refdef = 1;
 
     VID_CalcScreenDimensions();
+    VID_SetPalette(palette);
 
     if (modenum <= 2) // windowed modes
     {
@@ -1074,15 +1081,14 @@ int VID_SetMode (int modenum, unsigned char *palette)
     else
         original_mode = vid_modenum;
 
-    stat = VID_SetVidMode(modenum);
+    stat = VID_SetVidMode(modenum, 0, 0, palette);
 
     if (!stat)
     {
-        VID_SetVidMode (original_mode);
+        VID_SetVidMode (original_mode, 0, 0, palette);
         return false;
     }
 
-    VID_SetPalette(palette);
     vid_modenum = modenum;
     Cvar_SetValue ("vid_mode", (float)vid_modenum);
     return true;

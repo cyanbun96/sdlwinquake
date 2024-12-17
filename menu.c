@@ -18,6 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 #include "quakedef.h"
+#include "r_shared.h"
 #include <SDL2/SDL.h>
 
 extern cvar_t _windowed_mouse;
@@ -26,7 +27,9 @@ extern cvar_t scr_stretchpixels;
 extern cvar_t newoptions;
 extern cvar_t sensitivityyscale;
 extern int uiscale;
+extern unsigned char vid_curpal[256*3];
 int drawmousemenu = 0;
+extern int VID_SetVidMode (int modenum, int customw, int customh, unsigned char *palette);
 
 #ifdef _WIN32
 #include "winquake.h"
@@ -1505,12 +1508,16 @@ void M_Keys_Key (int k)
 /* NEW MENU */
 
 int new_cursor;
+char customwidthstr[16];
+char customheightstr[16];
 
 void M_Menu_New_f (void)
 {
 	key_dest = key_menu;
 	m_state = m_new;
 	m_entersound = true;
+    sprintf(customwidthstr, "%d", vid.width);
+    sprintf(customheightstr, "%d", vid.height);
 }
 
 void M_New_Draw (void)
@@ -1538,22 +1545,55 @@ void M_New_Draw (void)
     M_DrawCheckbox (xoffset + 204, 48, newoptions.value);
 
     if (new_cursor == 2) {
-        M_Print      (xoffset + 24, 152, "This menu can be enabled/disabled");
-        M_Print      (xoffset + 32, 168, "with the                command");
-        M_PrintWhite (xoffset + 32, 168, "         newoptions 1/0");
+        M_DrawTextBox (52, 134, 30, 2);
+        M_Print      (64, 142, "  This menu can be restored");
+        M_Print      (64, 150, "with the              command");
+        M_PrintWhite (64, 150, "         newoptions 1");
     }
 
     M_Print (xoffset, 56, "         Y Mouse Speed");
     sprintf (temp, "%0.1f\n", sensitivityyscale.value);
 	M_Print (xoffset + 204, 56, temp);
 
-	M_DrawCharacter (xoffset + 192, 32 + new_cursor*8, 12+((int)(realtime*4)&1));
+    M_Print (xoffset, 68, "          Custom Width");
+	M_DrawTextBox (xoffset + 196, 60, 8, 1);
+    M_Print (xoffset + 204, 68, customwidthstr);
+    if (new_cursor == 4) {
+		M_DrawCharacter (xoffset + 204 + 8*strlen(customwidthstr), 68, 10+((int)(realtime*4)&1));
+        sprintf (temp, "%d", MAXWIDTH);
+        M_DrawTextBox (xoffset + 68, 134, 16+strlen(temp), 1);
+        M_Print (xoffset + 80, 142, "320 <= Width <=");
+        M_Print (xoffset + 208, 142, temp);
+    }
+
+    M_Print (xoffset, 84, "         Custom Height");
+	M_DrawTextBox (xoffset + 196, 76, 8, 1);
+    M_Print (xoffset + 204, 84, customheightstr);
+    if (new_cursor == 5) {
+		M_DrawCharacter (xoffset + 204 + 8*strlen(customheightstr), 84, 10+((int)(realtime*4)&1));
+        sprintf (temp, "%d", MAXHEIGHT);
+        M_DrawTextBox (xoffset + 68, 134, 17+strlen(temp), 1);
+        M_Print (xoffset + 80, 142, "200 <= Height <=");
+        M_Print (xoffset + 216, 142, temp);
+    }
+
+    M_Print (xoffset + 204, 96, "Set Mode");
+
+    if (new_cursor == 4)
+        M_DrawCharacter (xoffset + 192, 68, 12+((int)(realtime*4)&1));
+    else if (new_cursor == 5)
+        M_DrawCharacter (xoffset + 192, 84, 12+((int)(realtime*4)&1));
+    else if (new_cursor == 6)
+        M_DrawCharacter (xoffset + 192, 96, 12+((int)(realtime*4)&1));
+    else
+        M_DrawCharacter (xoffset + 192, 32 + new_cursor*8, 12+((int)(realtime*4)&1));
 }
 
 
 void M_New_Key (int k)
 {
-    int newoptionnum = 3; 
+    int newoptionnum = 6; 
+    int l = 0;
 	switch (k)
 	{
 	case K_ESCAPE:
@@ -1597,10 +1637,38 @@ void M_New_Key (int k)
             Cvar_SetValue ("newoptions", !newoptions.value);
         else if (new_cursor == 3 && sensitivityyscale.value < 10)
             Cvar_SetValue ("sensitivityyscale", sensitivityyscale.value + 0.1);
+        else if (new_cursor == 6
+                 && Q_atoi(customwidthstr) >= 320
+                 && Q_atoi(customheightstr) >= 200
+                 && Q_atoi(customwidthstr) <= MAXWIDTH
+                 && Q_atoi(customheightstr) <= MAXHEIGHT)
+            VID_SetVidMode(0, Q_atoi(customwidthstr), Q_atoi(customheightstr), vid_curpal);
+        break;
+
+	case K_BACKSPACE:
+		if (new_cursor == 4 && strlen(customwidthstr))
+				customwidthstr[strlen(customwidthstr)-1] = 0;
+        else if (new_cursor == 5 && strlen(customheightstr))
+				customheightstr[strlen(customheightstr)-1] = 0;
         break;
 
     default:
-        M_Menu_Options_f ();
+		if (k < '0' || k > '9')
+			break;
+        if (new_cursor == 4) {
+            l = strlen(customwidthstr);
+            if (l < 7) {
+                customwidthstr[l+1] = 0;
+                customwidthstr[l] = k;
+            }
+        }
+        else if (new_cursor == 5) {
+            l = strlen(customheightstr);
+            if (l < 7) {
+                customheightstr[l+1] = 0;
+                customheightstr[l] = k;
+            }
+        }
 	}
 }
 
